@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COS Creusot - Comité des Œuvres Sociales</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/home.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>COS Creusot</h1>
+                    <span>Comité des Œuvres Sociales</span>
+                </div>
+                
+                <nav class="main-nav" id="mainNav">
+                    <ul>
+                        <li><a href="/" class="active">Accueil</a></li>
+                        <li><a href="/avantages">Avantages</a></li>
+                        <li><a href="/voyages">Voyages</a></li>
+                        <li><a href="/retraites">Retraites</a></li>
+                        <li><a href="/evenements">Événements</a></li>
+                    </ul>
+                </nav>
+
+                <div class="auth-section" id="authSection">
+                    <div class="auth-buttons" id="authButtons">
+                        <a href="/connexion" class="btn btn-outline">Connexion</a>
+                        <a href="/inscription" class="btn btn-primary">Inscription</a>
+                    </div>
+                    
+                    <div class="user-menu" id="userMenu" style="display: none;">
+                        <div class="user-info">
+                            <span id="userName"></span>
+                            <div class="user-dropdown">
+                                <button class="btn-admin" id="adminBtn" style="display: none;">
+                                    <a href="/admin">Administration</a>
+                                </button>
+                                <button class="btn-logout" id="logoutBtn">Déconnexion</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h2>Bienvenue au COS du Creusot</h2>
+            <p>Découvrez tous les avantages et services du Comité des Œuvres Sociales de la ville du Creusot</p>
+            <div class="hero-buttons">
+                <a href="/inscription" class="btn btn-primary btn-large">Nous rejoindre</a>
+                <a href="/avantages" class="btn btn-outline btn-large">Découvrir nos avantages</a>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="hero-placeholder">
+                <span>🏛️</span>
+                <p>Le Creusot</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Articles Section -->
+    <section class="featured-section">
+        <div class="container">
+            <h2 class="section-title">Actualités à la Une</h2>
+            <div class="articles-carousel" id="featuredArticles">
+                <div class="loading">Chargement des actualités...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Grid -->
+    <section class="services-section">
+        <div class="container">
+            <h2 class="section-title">Nos Services</h2>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">🎁</div>
+                    <h3>Avantages</h3>
+                    <p>Profitez de nombreux avantages exclusifs réservés aux membres du COS</p>
+                    <a href="/avantages" class="btn btn-secondary">Découvrir</a>
+                </div>
+                
+                <div class="service-card">
+                    <div class="service-icon">✈️</div>
+                    <h3>Voyages</h3>
+                    <p>Partez à la découverte de nouvelles destinations avec nos voyages organisés</p>
+                    <a href="/voyages" class="btn btn-secondary">Voir les voyages</a>
+                </div>
+                
+                <div class="service-card">
+                    <div class="service-icon">🌟</div>
+                    <h3>Retraites</h3>
+                    <p>Services et accompagnement dédiés aux retraités de la ville</p>
+                    <a href="/retraites" class="btn btn-secondary">En savoir plus</a>
+                </div>
+                
+                <div class="service-card">
+                    <div class="service-icon">🎉</div>
+                    <h3>Événements</h3>
+                    <p>Participez aux événements et activités organisés par le COS</p>
+                    <a href="/evenements" class="btn btn-secondary">Voir les événements</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Latest Articles -->
+    <section class="latest-articles">
+        <div class="container">
+            <h2 class="section-title">Dernières Actualités</h2>
+            <div class="articles-grid" id="latestArticles">
+                <div class="loading">Chargement des articles...</div>
+            </div>
+            <div class="text-center">
+                <button class="btn btn-outline" id="loadMoreBtn">Charger plus d'articles</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>COS Creusot</h3>
+                    <p>Comité des Œuvres Sociales<br>de la ville du Creusot</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Liens Rapides</h4>
+                    <ul>
+                        <li><a href="/avantages">Avantages</a></li>
+                        <li><a href="/voyages">Voyages</a></li>
+                        <li><a href="/retraites">Retraites</a></li>
+                        <li><a href="/evenements">Événements</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p>📧 contact@cos-creusot.fr</p>
+                    <p>📞 03 85 XX XX XX</p>
+                    <p>📍 Le Creusot, France</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Suivez-nous</h4>
+                    <div class="social-links">
+                        <a href="#" class="social-link">Facebook</a>
+                        <a href="#" class="social-link">Twitter</a>
+                        <a href="#" class="social-link">LinkedIn</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 COS Creusot. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/home.js"></script>
+</body>
+</html>

@@ -1,0 +1,332 @@
+/* Styles spécifiques à la page d'accueil */
+
+/* Hero Section */
+.hero {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 50%, var(--primary-red) 100%);
+    color: var(--primary-white);
+    padding: 4rem 0;
+    display: flex;
+    align-items: center;
+    min-height: 70vh;
+}
+
+.hero-content {
+    flex: 1;
+    padding: 0 2rem;
+}
+
+.hero-content h2 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: var(--primary-white);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.hero-content p {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+    color: rgba(255, 255, 255, 0.9);
+    max-width: 600px;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.hero-image {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 2rem;
+}
+
+.hero-placeholder {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: var(--border-radius);
+    padding: 3rem;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    transition: var(--transition);
+}
+
+.hero-placeholder:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-5px);
+}
+
+.hero-placeholder span {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.hero-placeholder p {
+    color: var(--primary-white);
+    font-size: 1.125rem;
+    margin: 0;
+}
+
+/* Featured Section */
+.featured-section {
+    padding: 4rem 0;
+    background: var(--light-gray);
+}
+
+.section-title {
+    text-align: center;
+    color: var(--primary-blue);
+    margin-bottom: 3rem;
+    position: relative;
+}
+
+.section-title::after {
+    content: '';
+    display: block;
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(135deg, var(--primary-red), var(--secondary-red));
+    margin: 1rem auto;
+    border-radius: 2px;
+}
+
+.articles-carousel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.article-card {
+    background: var(--primary-white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: var(--transition);
+    position: relative;
+}
+
+.article-card:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-5px);
+}
+
+.article-card.featured {
+    border: 3px solid var(--primary-red);
+}
+
+.article-card.featured::before {
+    content: '⭐ À la Une';
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--primary-red);
+    color: var(--primary-white);
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-bottom-left-radius: var(--border-radius);
+}
+
+.article-image {
+    height: 200px;
+    background: linear-gradient(135deg, var(--light-gray), #e9ecef);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--medium-gray);
+    font-size: 3rem;
+    overflow: hidden;
+}
+
+.article-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: var(--transition);
+}
+
+.article-card:hover .article-image img {
+    transform: scale(1.05);
+}
+
+.article-content {
+    padding: 1.5rem;
+}
+
+.article-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    color: var(--medium-gray);
+}
+
+.article-category {
+    background: var(--primary-blue);
+    color: var(--primary-white);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.article-category.avantages { background: var(--primary-red); }
+.article-category.voyages { background: #28a745; }
+.article-category.retraites { background: #6f42c1; }
+.article-category.evenements { background: #fd7e14; }
+
+.article-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--dark-gray);
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.article-excerpt {
+    color: var(--medium-gray);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.article-author {
+    font-size: 0.875rem;
+    color: var(--medium-gray);
+}
+
+/* Services Section */
+.services-section {
+    padding: 4rem 0;
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.service-card {
+    background: var(--primary-white);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    text-align: center;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    border: 2px solid transparent;
+}
+
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--primary-blue);
+}
+
+.service-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.service-card h3 {
+    color: var(--primary-blue);
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.service-card p {
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+/* Latest Articles */
+.latest-articles {
+    padding: 4rem 0;
+    background: var(--light-gray);
+}
+
+.articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+/* Responsive pour la page d'accueil */
+@media (max-width: 768px) {
+    .hero {
+        flex-direction: column;
+        text-align: center;
+        padding: 3rem 0;
+        min-height: auto;
+    }
+    
+    .hero-content {
+        padding: 0;
+    }
+    
+    .hero-content h2 {
+        font-size: 2.25rem;
+    }
+    
+    .hero-content p {
+        font-size: 1.125rem;
+    }
+    
+    .hero-buttons {
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+    
+    .hero-image {
+        padding: 0;
+    }
+    
+    .hero-placeholder {
+        padding: 2rem;
+    }
+    
+    .hero-placeholder span {
+        font-size: 3rem;
+    }
+    
+    .articles-carousel,
+    .services-grid,
+    .articles-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .service-card {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-content h2 {
+        font-size: 1.875rem;
+    }
+    
+    .hero-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .articles-carousel {
+        grid-template-columns: 1fr;
+    }
+    
+    .article-card {
+        margin: 0 auto;
+        max-width: 400px;
+    }
+}

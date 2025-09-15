@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - COS Creusot</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="/">
+                        <h1>COS Creusot</h1>
+                        <span>Comité des Œuvres Sociales</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Register Form -->
+    <main class="auth-main">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <h2>Inscription</h2>
+                    <p>Rejoignez le COS Creusot</p>
+                </div>
+
+                <form class="auth-form" id="registerForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstname">Prénom *</label>
+                            <input type="text" id="firstname" name="firstname" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="lastname">Nom *</label>
+                            <input type="text" id="lastname" name="lastname" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Adresse email *</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Mot de passe *</label>
+                        <input type="password" id="password" name="password" required minlength="6">
+                        <small>Au moins 6 caractères</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirmer le mot de passe *</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Téléphone</label>
+                        <input type="tel" id="phone" name="phone">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address">Adresse</label>
+                        <textarea id="address" name="address" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="acceptTerms" name="acceptTerms" required>
+                            J'accepte les conditions d'utilisation et la politique de confidentialité
+                        </label>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-full" id="submitBtn">
+                            S'inscrire
+                        </button>
+                    </div>
+                </form>
+
+                <div class="auth-links">
+                    <p>Déjà membre ? <a href="/connexion">Se connecter</a></p>
+                    <p><a href="/">Retour à l'accueil</a></p>
+                </div>
+
+                <div class="alert" id="alertMessage" style="display: none;"></div>
+
+                <div class="info-box">
+                    <h4>ℹ️ Information importante</h4>
+                    <p>Après votre inscription, votre compte devra être approuvé par un administrateur avant que vous puissiez accéder aux services réservés aux membres.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2024 COS Creusot. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/register.js"></script>
+</body>
+</html>
