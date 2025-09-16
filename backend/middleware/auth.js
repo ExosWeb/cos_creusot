@@ -11,7 +11,8 @@ const authenticateToken = async (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const jwtSecret = process.env.JWT_SECRET || 'cos-creusot-secret-key-default-2024';
+        const decoded = jwt.verify(token, jwtSecret);
         
         // Vérifier si l'utilisateur existe toujours
         const [users] = await pool.execute(
@@ -44,6 +45,59 @@ const requireAdmin = (req, res, next) => {
     next();
 };
 
+// Middleware pour vérifier l'accès aux articles selon le rôle
+const checkArticleAccess = (req, res, next) => {
+    // Les admins ont accès à tout
+    if (req.user.role === 'admin') {
+        return next();
+    }
+    
+    // Les retraités n'ont accès qu'aux articles 'retraites'
+    if (req.user.role === 'retraite') {
+        req.articleFilter = { category: 'retraites' };
+        return next();
+    }
+    
+    // Les membres normaux ont accès à tout sauf 'retraites'
+    if (req.user.role === 'member') {
+        req.articleFilter = { categoryNot: 'retraites' };
+        return next();
+    }
+    
+    return res.status(403).json({ error: 'Rôle non autorisé' });
+};
+
+// Middleware strict : seuls retraités et adhérents peuvent accéder aux articles
+const requireMemberOrRetraite = async (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Authentification requise pour accéder aux articles' });
+    }
+
+    // Admin, retraité ou membre adhérent peuvent accéder
+    if (req.user.role === 'admin' || req.user.role === 'retraite' || req.user.role === 'member') {
+        return next();
+    }
+    
+    return res.status(403).json({ 
+        error: 'Accès refusé. Seuls les membres et retraités peuvent consulter les articles.',
+        message: 'Veuillez vous connecter avec un compte autorisé.'
+    });
+};
+
+// Middleware pour filtrer les articles selon le rôle
+const filterArticlesByRole = (req, res, next) => {
+    if (req.user.role === 'retraite') {
+        // Les retraités ne voient que les articles "retraites"
+        req.roleFilter = { category: 'retraites' };
+    } else if (req.user.role === 'member') {
+        // Les membres voient tous les articles sauf "retraites"
+        req.roleFilter = { categoryNot: 'retraites' };
+    }
+    // Les admins voient tout (pas de filtre)
+    
+    next();
+};
+
 // Middleware pour logger les actions
 const logAction = (action, resourceType = null) => {
     return async (req, res, next) => {
@@ -67,5 +121,8 @@ const logAction = (action, resourceType = null) => {
 module.exports = {
     authenticateToken,
     requireAdmin,
+    checkArticleAccess,
+    requireMemberOrRetraite,
+    filterArticlesByRole,
     logAction
 };

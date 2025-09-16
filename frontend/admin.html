@@ -6,6 +6,7 @@
     <title>Administration - COS Creusot</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/calendar.css">
 </head>
 <body>
     <!-- Header -->
@@ -14,8 +15,11 @@
             <div class="header-content">
                 <div class="logo">
                     <a href="/">
-                        <h1>COS Creusot</h1>
-                        <span>Panel Administration</span>
+                        <div class="logo-icon">🏛️</div>
+                        <div class="logo-text">
+                            <h1>COS Creusot</h1>
+                            <span>Panel Administration</span>
+                        </div>
                     </a>
                 </div>
                 
@@ -39,6 +43,8 @@
                 <li><a href="#dashboard" class="tab-link active" data-tab="dashboard">Tableau de bord</a></li>
                 <li><a href="#users" class="tab-link" data-tab="users">Utilisateurs</a></li>
                 <li><a href="#articles" class="tab-link" data-tab="articles">Articles</a></li>
+                <li><a href="#events" class="tab-link" data-tab="events">Événements</a></li>
+                <li><a href="#messages" class="tab-link" data-tab="messages">Messages</a></li>
                 <li><a href="#logs" class="tab-link" data-tab="logs">Logs</a></li>
             </ul>
         </div>
@@ -140,6 +146,137 @@
                 </div>
             </div>
 
+            <!-- Events Tab -->
+            <div id="events" class="tab-content">
+                <div class="tab-header">
+                    <h2>🎉 Gestion des Événements</h2>
+                    <button class="btn btn-primary" id="addEventBtn">➕ Nouvel Événement</button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-info">
+                            <h3 id="totalEvents">0</h3>
+                            <p>Total Événements</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔜</div>
+                        <div class="stat-info">
+                            <h3 id="upcomingEvents">0</h3>
+                            <p>À Venir</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <h3 id="totalRegistrations">0</h3>
+                            <p>Total Inscriptions</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-info">
+                            <h3 id="avgParticipants">0</h3>
+                            <p>Moy. Participants</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtres pour les événements -->
+                <div class="filters-section">
+                    <div class="filters-row">
+                        <select id="eventsStatusFilter">
+                            <option value="">Tous les statuts</option>
+                            <option value="draft">Brouillon</option>
+                            <option value="published">Publié</option>
+                            <option value="cancelled">Annulé</option>
+                        </select>
+
+                        <select id="eventsCategoryFilter">
+                            <option value="">Toutes les catégories</option>
+                            <option value="general">Général</option>
+                            <option value="voyage">Voyage</option>
+                            <option value="retraite">Retraite</option>
+                            <option value="activite">Activité</option>
+                        </select>
+
+                        <input type="text" id="eventsSearchFilter" placeholder="Rechercher un événement...">
+                        
+                        <button class="btn btn-outline" id="refreshEventsBtn">🔄 Actualiser</button>
+                    </div>
+                </div>
+
+                <!-- Table des événements -->
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Titre</th>
+                                <th>Date</th>
+                                <th>Catégorie</th>
+                                <th>Inscriptions</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center">
+                                    <div class="loading">Chargement des événements...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" id="eventsPagination">
+                    <!-- Généré par JavaScript -->
+                </div>
+            </div>
+
+            <!-- Messages Tab -->
+            <div id="messages" class="tab-content">
+                <div class="tab-header">
+                    <h2>Messages de contact</h2>
+                    
+                    <div class="tab-filters">
+                        <select id="messageStatusFilter">
+                            <option value="">Tous les messages</option>
+                            <option value="new">Nouveaux</option>
+                            <option value="read">Lus</option>
+                            <option value="replied">Répondus</option>
+                        </select>
+                        <button class="btn btn-secondary" id="markAllReadBtn">
+                            Marquer tout comme lu
+                        </button>
+                    </div>
+                </div>
+
+                <div class="messages-container">
+                    <div class="messages-stats">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalMessages">-</div>
+                            <div class="stat-label">Total messages</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="newMessages">-</div>
+                            <div class="stat-label">Nouveaux</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="repliedMessages">-</div>
+                            <div class="stat-label">Répondus</div>
+                        </div>
+                    </div>
+
+                    <div class="messages-list" id="messagesList">
+                        <div class="loading">Chargement des messages...</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Logs Tab -->
             <div id="logs" class="tab-content">
                 <div class="tab-header">
@@ -230,7 +367,7 @@
                                 <select id="articleCategory" name="category" required class="form-select">
                                     <option value="">Choisir une catégorie</option>
                                     <option value="general">📰 Général</option>
-                                    <option value="avantages">🎁 Avantages</option>
+                                    <option value="prestations">🎁 Prestations</option>
                                     <option value="voyages">✈️ Voyages</option>
                                     <option value="retraites">👴 Retraites</option>
                                     <option value="evenements">🎉 Événements</option>
@@ -252,6 +389,42 @@
                                     <option value="draft">📝 Brouillon</option>
                                     <option value="published">🌐 Publié</option>
                                 </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rangée visibilité et mise en avant -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="articleVisibility" class="form-label">
+                                <svg class="form-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                    <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z" stroke="currentColor" stroke-width="2" fill="none"/>
+                                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
+                                </svg>
+                                Qui peut voir cet article ?
+                                <span class="required">*</span>
+                            </label>
+                            <div class="select-wrapper">
+                                <select id="articleVisibility" name="visibility" required class="form-select">
+                                    <option value="public">🌐 Tout le monde (Public)</option>
+                                    <option value="adherent">👥 Adhérents seulement</option>
+                                    <option value="retraite">👴 Retraités seulement</option>
+                                    <option value="adherent_retraite">🤝 Adhérents et Retraités</option>
+                                </select>
+                            </div>
+                            <div class="form-help">Définit qui peut voir et accéder à cet article</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="articleFeatured" class="form-label">
+                                <svg class="form-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                    <polygon points="12,2 15.09,8.26 22,9 17,14 18.18,21 12,17.77 5.82,21 7,14 2,9 8.91,8.26" fill="currentColor"/>
+                                </svg>
+                                Mettre en avant
+                            </label>
+                            <div class="checkbox-wrapper">
+                                <input type="checkbox" id="articleFeatured" name="featured" class="form-checkbox">
+                                <label for="articleFeatured" class="checkbox-label">Article mis en avant sur l'accueil</label>
                             </div>
                         </div>
                     </div>
@@ -381,9 +554,198 @@
         </div>
     </div>
 
+    <!-- Modale pour créer/éditer un événement -->
+    <div class="modal" id="eventModal" style="display: none;">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="eventModalTitle">Nouvel Événement</h3>
+                <button class="modal-close" id="closeEventModal">&times;</button>
+            </div>
+            
+            <form id="eventForm" class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventTitle">Titre de l'événement *</label>
+                        <input type="text" id="eventTitle" name="title" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="eventCategory">Catégorie</label>
+                        <select id="eventCategory" name="category">
+                            <option value="general">Général</option>
+                            <option value="voyage">Voyage</option>
+                            <option value="retraite">Retraite</option>
+                            <option value="activite">Activité</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventDescription">Description</label>
+                    <textarea id="eventDescription" name="description" rows="4"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventStartDate">Date de début *</label>
+                        <input type="date" id="eventStartDate" name="start_date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="eventEndDate">Date de fin</label>
+                        <input type="date" id="eventEndDate" name="end_date">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventStartTime">Heure de début *</label>
+                        <input type="time" id="eventStartTime" name="start_time" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="eventEndTime">Heure de fin</label>
+                        <input type="time" id="eventEndTime" name="end_time">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventLocation">Lieu</label>
+                        <input type="text" id="eventLocation" name="location">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="eventMaxParticipants">Nombre max de participants</label>
+                        <input type="number" id="eventMaxParticipants" name="max_participants" min="1">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="eventMemberOnly" name="is_member_only">
+                            Réservé aux membres uniquement
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="eventStatus">Statut</label>
+                        <select id="eventStatus" name="status">
+                            <option value="draft">Brouillon</option>
+                            <option value="published">Publié</option>
+                            <option value="cancelled">Annulé</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="cancelEventBtn">Annuler</button>
+                <button type="submit" class="btn btn-primary" id="saveEventBtn">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale pour voir les inscriptions d'un événement -->
+    <div class="modal" id="registrationsModal" style="display: none;">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="registrationsModalTitle">Inscriptions à l'événement</h3>
+                <button class="modal-close" id="closeRegistrationsModal">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="registrations-actions">
+                    <button class="btn btn-outline" id="exportRegistrationsBtn">📥 Exporter CSV</button>
+                    <span id="registrationsCount">0 inscription(s)</span>
+                </div>
+
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Email</th>
+                                <th>Téléphone</th>
+                                <th>Date d'inscription</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registrationsTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center">
+                                    <div class="loading">Chargement des inscriptions...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="closeRegistrationsBtn">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour voir un message -->
+    <div id="messageModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="messageModalTitle">Détail du message</h3>
+                <button class="modal-close" id="closeMessageModal">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="message-details">
+                    <div class="message-info">
+                        <div class="info-row">
+                            <span class="info-label">De :</span>
+                            <span class="info-value" id="messageSender">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Email :</span>
+                            <span class="info-value" id="messageEmail">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Téléphone :</span>
+                            <span class="info-value" id="messagePhone">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Date :</span>
+                            <span class="info-value" id="messageDate">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Statut :</span>
+                            <span class="info-value" id="messageStatus">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="message-subject">
+                        <h4>Sujet</h4>
+                        <p id="messageSubjectText">-</p>
+                    </div>
+                    
+                    <div class="message-content">
+                        <h4>Message</h4>
+                        <div id="messageContentText">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="markAsReadBtn">Marquer comme lu</button>
+                <button type="button" class="btn btn-primary" id="markAsRepliedBtn">Marquer comme répondu</button>
+                <button type="button" class="btn btn-secondary" id="closeMessageDetailBtn">Fermer</button>
+            </div>
+        </div>
+    </div>
+
     <div class="alert" id="alertMessage" style="display: none;"></div>
 
     <script src="js/auth.js"></script>
+    <script src="js/admin-events.js"></script>
     <script src="js/admin.js"></script>
 </body>
 </html>

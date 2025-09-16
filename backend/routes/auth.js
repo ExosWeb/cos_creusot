@@ -13,7 +13,7 @@ const registerValidation = [
     body('password').isLength({ min: 6 }).withMessage('Le mot de passe doit contenir au moins 6 caractères'),
     body('firstname').trim().isLength({ min: 2 }).withMessage('Le prénom doit contenir au moins 2 caractères'),
     body('lastname').trim().isLength({ min: 2 }).withMessage('Le nom doit contenir au moins 2 caractères'),
-    body('phone').optional().isMobilePhone('fr-FR').withMessage('Numéro de téléphone invalide')
+    body('phone').optional().isLength({ min: 10, max: 15 }).withMessage('Numéro de téléphone invalide (10-15 caractères)')
 ];
 
 // Validation pour la connexion
@@ -24,9 +24,11 @@ const loginValidation = [
 
 // Route d'inscription
 router.post('/register', registerValidation, async (req, res) => {
+    console.log('📝 Tentative d\'inscription:', req.body);
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+            console.log('❌ Erreurs de validation:', errors.array());
             return res.status(400).json({ errors: errors.array() });
         }
 
@@ -35,10 +37,12 @@ router.post('/register', registerValidation, async (req, res) => {
         // Vérifier si l'utilisateur existe déjà
         const existingUser = await User.findByEmail(email);
         if (existingUser) {
+            console.log('❌ Email déjà utilisé:', email);
             return res.status(400).json({ error: 'Cet email est déjà utilisé' });
         }
 
         // Créer l'utilisateur
+        console.log('✅ Création utilisateur...');
         const userId = await User.create({
             email,
             password,
@@ -47,6 +51,7 @@ router.post('/register', registerValidation, async (req, res) => {
             phone,
             address
         });
+        console.log('✅ Utilisateur créé avec ID:', userId);
 
         // Logger l'inscription
         const ip = req.ip || req.connection.remoteAddress;
@@ -63,7 +68,7 @@ router.post('/register', registerValidation, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Erreur lors de l\'inscription:', error);
+        console.error('❌ Erreur lors de l\'inscription:', error);
         res.status(500).json({ error: 'Erreur serveur lors de l\'inscription' });
     }
 });
@@ -114,10 +119,11 @@ router.post('/login', loginValidation, async (req, res) => {
         }
 
         // Créer le token JWT
+        const jwtSecret = process.env.JWT_SECRET || 'cos-creusot-secret-key-default-2024';
         const token = jwt.sign(
             { userId: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN }
+            jwtSecret,
+            { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
         );
 
         // Mettre à jour la dernière connexion
@@ -157,7 +163,8 @@ router.get('/verify', async (req, res) => {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const jwtSecret = process.env.JWT_SECRET || 'cos-creusot-secret-key-default-2024';
+        const decoded = jwt.verify(token, jwtSecret);
         console.log('🔓 Token décodé:', decoded);
         
         const user = await User.findById(decoded.userId);

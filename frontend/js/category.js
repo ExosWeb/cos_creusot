@@ -26,11 +26,65 @@ async function loadCategoryArticles() {
     try {
         utils.showLoading(articlesGrid, true);
 
-        const response = await fetch(`/api/articles?category=${category}`);
+        // Pour la catégorie retraites, vérifier l'authentification
+        if (category === 'retraites') {
+            if (!window.authManager || !window.authManager.isAuthenticated()) {
+                // Rediriger vers la connexion si pas authentifié
+                window.location.href = '/connexion?redirect=' + encodeURIComponent(window.location.pathname);
+                return;
+            }
+        }
+
+        // Utiliser la route appropriée selon la catégorie
+        let apiUrl = `/api/articles/category/${category}`;
+        const headers = {};
+        
+        // Pour les catégories restreintes, utiliser la route authentifiée si connecté
+        if (window.authManager && window.authManager.isAuthenticated() && category === 'retraites') {
+            apiUrl = `/api/articles/user-category/${category}`;
+            headers['Authorization'] = `Bearer ${window.authManager.token}`;
+        }
+        
+        console.log('🔍 Chargement des articles pour catégorie:', category, 'URL:', apiUrl);
+        
+        const response = await fetch(apiUrl, { headers });
+        
+        if (!response.ok) {
+            console.error('❌ Erreur HTTP:', response.status, response.statusText);
+            
+            if (response.status === 403) {
+                // Accès refusé
+                articlesGrid.innerHTML = `
+                    <div class="access-denied">
+                        <h3>🔒 Accès restreint</h3>
+                        <p>Vous n'avez pas l'autorisation d'accéder à cette section.</p>
+                        ${category === 'retraites' ? '<p>Cette section est réservée aux membres retraités.</p>' : ''}
+                    </div>
+                `;
+                return;
+            } else if (response.status === 401) {
+                // Non authentifié
+                window.location.href = '/connexion?redirect=' + encodeURIComponent(window.location.pathname);
+                return;
+            } else {
+                // Autres erreurs
+                const errorText = await response.text();
+                console.error('❌ Détail erreur:', errorText);
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+        }
+        
         const articles = await response.json();
+        console.log('📄 Articles reçus:', articles.length);
 
         if (articles.length === 0) {
-            articlesGrid.style.display = 'none';
+            articlesGrid.innerHTML = `
+                <div class="no-articles-content">
+                    <div class="no-articles-icon">📄</div>
+                    <h3>Aucun article dans cette catégorie</h3>
+                    <p>Il n'y a actuellement aucun article publié dans la catégorie ${category}.</p>
+                </div>
+            `;
             if (noArticles) noArticles.style.display = 'block';
             return;
         }
@@ -45,10 +99,13 @@ async function loadCategoryArticles() {
         applyMemberRestrictions();
 
     } catch (error) {
-        console.error('Erreur lors du chargement des articles:', error);
+        console.error('💥 Erreur lors du chargement des articles:', error);
         articlesGrid.innerHTML = `
             <div class="error">
-                <p>Erreur lors du chargement des articles de cette catégorie.</p>
+                <h3>⚠️ Erreur de chargement</h3>
+                <p>Impossible de charger les articles de cette catégorie.</p>
+                <p><small>Détail: ${error.message}</small></p>
+                <button onclick="loadCategoryArticles()" class="btn btn-primary">Réessayer</button>
             </div>
         `;
     }

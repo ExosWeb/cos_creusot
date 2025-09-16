@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article - COS Creusot</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/article.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">🏛️</div>
+                    <div class="logo-text">
+                        <h1>COS Creusot</h1>
+                        <span>Comité des Œuvres Sociales</span>
+                    </div>
+                </div>
+                
+                <nav class="main-nav" id="mainNav">
+                    <ul>
+                        <li><a href="/">Accueil</a></li>
+                        <li><a href="/avantages">Prestations</a></li>
+                        <li><a href="/voyages">Voyages</a></li>
+                        <li><a href="/retraites">Retraites</a></li>
+                        <li><a href="/evenements">Événements</a></li>
+                        <li><a href="/contact">Contact</a></li>
+                    </ul>
+                    
+                    <div class="mobile-menu-btn" id="mobileMenuBtn">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </nav>
+                
+                <div class="auth-buttons">
+                    <div class="guest-menu" id="guestMenu">
+                        <a href="/connexion" class="btn-login">Connexion</a>
+                        <a href="/inscription" class="btn-register">Inscription</a>
+                    </div>
+                    
+                    <div class="user-menu" id="userMenu" style="display: none;">
+                        <div class="user-info">
+                            <span id="userName"></span>
+                            <div class="user-dropdown">
+                                <button class="btn-admin" id="adminBtn" style="display: none;">
+                                    <a href="/admin">Administration</a>
+                                </button>
+                                <button class="btn-logout" id="logoutBtn">Déconnexion</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Chargement -->
+    <div id="loadingSpinner" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>Chargement de l'article...</p>
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <main class="article-main">
+        <!-- Navigation Breadcrumb -->
+        <section class="breadcrumb">
+            <div class="container">
+                <nav class="breadcrumb-nav">
+                    <a href="/" class="breadcrumb-home">🏠 Accueil</a>
+                    <span class="breadcrumb-separator">›</span>
+                    <a href="#" id="breadcrumbCategory" class="breadcrumb-category"></a>
+                    <span class="breadcrumb-separator">›</span>
+                    <span class="breadcrumb-current" id="breadcrumbTitle">Article</span>
+                </nav>
+            </div>
+        </section>
+
+        <!-- Article Content -->
+        <article class="article-container">
+            <div class="container">
+                <div class="article-wrapper">
+                    
+                    <!-- Article Header -->
+                    <header class="article-header">
+                        <div class="article-meta">
+                            <span class="article-category" id="articleCategory"></span>
+                            <time class="article-date" id="articleDate"></time>
+                            <span class="member-only-badge" id="memberBadge" style="display: none;">
+                                👤 Réservé aux membres
+                            </span>
+                        </div>
+                        
+                        <h1 class="article-title" id="articleTitle"></h1>
+                        
+                        <div class="article-excerpt" id="articleExcerpt"></div>
+                        
+                        <div class="article-actions">
+                            <button class="btn-back" id="backButton">
+                                ← Retour à la liste
+                            </button>
+                            <div class="article-share">
+                                <button class="btn-share" id="shareButton">
+                                    📤 Partager
+                                </button>
+                                <button class="btn-print" id="printButton">
+                                    🖨️ Imprimer
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+
+                    <!-- Article Image -->
+                    <div class="article-image-container" id="articleImageContainer" style="display: none;">
+                        <img id="articleImage" alt="" class="article-image">
+                    </div>
+
+                    <!-- Article Content -->
+                    <div class="article-content">
+                        <div class="content-body" id="articleContent">
+                            <!-- Le contenu sera chargé dynamiquement -->
+                        </div>
+                    </div>
+
+                    <!-- Article Footer -->
+                    <footer class="article-footer">
+                        <div class="article-info">
+                            <p>Dernière mise à jour : <span id="articleUpdated"></span></p>
+                        </div>
+                        
+                        <div class="article-navigation">
+                            <div class="nav-buttons">
+                                <button class="btn-nav-prev" id="prevArticle" style="display: none;">
+                                    ← Article précédent
+                                </button>
+                                <button class="btn-nav-next" id="nextArticle" style="display: none;">
+                                    Article suivant →
+                                </button>
+                            </div>
+                        </div>
+                    </footer>
+
+                </div>
+            </div>
+        </article>
+
+        <!-- Articles liés -->
+        <section class="related-articles" id="relatedArticlesSection" style="display: none;">
+            <div class="container">
+                <h2>Articles similaires</h2>
+                <div class="related-articles-grid" id="relatedArticles">
+                    <!-- Articles liés seront chargés ici -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Message d'erreur -->
+        <section class="error-section" id="errorSection" style="display: none;">
+            <div class="container">
+                <div class="error-content">
+                    <div class="error-icon">❌</div>
+                    <h2>Article non trouvé</h2>
+                    <p>L'article que vous cherchez n'existe pas ou a été supprimé.</p>
+                    <div class="error-actions">
+                        <button class="btn-primary" onclick="window.history.back()">
+                            Retour
+                        </button>
+                        <a href="/" class="btn-secondary">
+                            Accueil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Message accès restreint -->
+        <section class="restricted-section" id="restrictedSection" style="display: none;">
+            <div class="container">
+                <div class="restricted-content">
+                    <div class="restricted-icon">🔒</div>
+                    <h2>Accès restreint</h2>
+                    <p>Cet article est réservé aux membres du COS Creusot.</p>
+                    <div class="restricted-actions">
+                        <a href="/connexion" class="btn-primary">
+                            Se connecter
+                        </a>
+                        <a href="/inscription" class="btn-secondary">
+                            Devenir membre
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <div class="logo">
+                            <div class="logo-icon">🏛️</div>
+                            <div class="logo-text">
+                                <h3>COS Creusot</h3>
+                                <span>Comité des Œuvres Sociales</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Navigation</h4>
+                    <ul>
+                        <li><a href="/">Accueil</a></li>
+                        <li><a href="/avantages">Prestations</a></li>
+                        <li><a href="/voyages">Voyages</a></li>
+                        <li><a href="/retraites">Retraites</a></li>
+                        <li><a href="/evenements">Événements</a></li>
+                        <li><a href="/contact">Contact</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p>📧 contact@cos-creusot.fr</p>
+                    <p>📞 03 85 XX XX XX</p>
+                    <p>📍 71200 Le Creusot</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 COS Creusot. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/article.js"></script>
+</body>
+</html>

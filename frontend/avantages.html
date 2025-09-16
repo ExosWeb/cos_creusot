@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Avantages - COS Creusot</title>
+    <title>Prestations - COS Creusot</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/category.css">
+    <link rel="stylesheet" href="css/search.css">
 </head>
 <body>
     <!-- Header -->
@@ -13,17 +14,21 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <h1>COS Creusot</h1>
-                    <span>Comité des Œuvres Sociales</span>
+                    <div class="logo-icon">🏛️</div>
+                    <div class="logo-text">
+                        <h1>COS Creusot</h1>
+                        <span>Comité des Œuvres Sociales</span>
+                    </div>
                 </div>
                 
                 <nav class="main-nav" id="mainNav">
                     <ul>
                         <li><a href="/">Accueil</a></li>
-                        <li><a href="/avantages" class="active">Avantages</a></li>
+                        <li><a href="/avantages" class="active">Prestations</a></li>
                         <li><a href="/voyages">Voyages</a></li>
                         <li><a href="/retraites">Retraites</a></li>
                         <li><a href="/evenements">Événements</a></li>
+                        <li><a href="/contact">Contact</a></li>
                     </ul>
                 </nav>
 
@@ -60,8 +65,8 @@
         <div class="container">
             <div class="page-header-content">
                 <div class="page-icon">🎁</div>
-                <h1>Avantages</h1>
-                <p>Découvrez tous les avantages exclusifs réservés aux membres du COS Creusot</p>
+                <h1>Prestations</h1>
+                <p>Découvrez toutes les prestations exclusives réservées aux membres du COS Creusot</p>
             </div>
         </div>
     </section>
@@ -73,7 +78,7 @@
                 <div class="notice-icon">🔒</div>
                 <div class="notice-content">
                     <h3>Accès réservé aux membres</h3>
-                    <p>Pour accéder au détail de tous nos avantages, vous devez être connecté et votre compte doit être approuvé.</p>
+                    <p>Pour accéder au détail de toutes nos prestations, vous devez être connecté et votre compte doit être approuvé.</p>
                     <div class="notice-actions">
                         <a href="/inscription" class="btn btn-primary">S'inscrire</a>
                         <a href="/connexion" class="btn btn-outline">Se connecter</a>
@@ -143,12 +148,13 @@
     </footer>
 
     <script src="js/auth.js"></script>
+    <script src="js/search.js"></script>
     <script src="js/category.js"></script>
     <script>
-        // Configuration spécifique pour les avantages
+        // Configuration spécifique pour les prestations
         window.categoryConfig = {
-            category: 'avantages',
-            title: 'Avantages',
+            category: 'prestations',
+            title: 'Prestations',
             icon: '🎁'
         };
     </script>

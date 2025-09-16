@@ -1044,3 +1044,227 @@
         font-size: 0.875rem;
     }
 }
+
+/* ===========================
+   MESSAGES DE CONTACT
+   =========================== */
+
+.messages-container {
+    margin-top: 1.5rem;
+}
+
+.messages-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.messages-stats .stat-card {
+    background: var(--primary-white);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.messages-stats .stat-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--primary-blue);
+    margin-bottom: 0.5rem;
+}
+
+.messages-stats .stat-label {
+    color: var(--medium-gray);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.messages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 1.5rem;
+}
+
+.message-card {
+    background: var(--primary-white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    transition: var(--transition);
+    border-left: 4px solid var(--light-gray);
+    position: relative;
+}
+
+.message-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.message-card.new {
+    border-left-color: #e74c3c;
+    background: rgba(231, 76, 60, 0.02);
+}
+
+.message-card.read {
+    border-left-color: #f39c12;
+}
+
+.message-card.replied {
+    border-left-color: #27ae60;
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.message-sender strong {
+    display: block;
+    color: var(--text-dark);
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.message-email {
+    color: var(--medium-gray);
+    font-size: 0.875rem;
+}
+
+.message-status {
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.message-subject h4 {
+    color: var(--text-dark);
+    margin: 0 0 0.75rem 0;
+    font-size: 1rem;
+}
+
+.message-preview {
+    color: var(--text-light);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    font-size: 0.925rem;
+}
+
+.message-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--light-gray);
+}
+
+.message-date {
+    color: var(--medium-gray);
+    font-size: 0.8rem;
+}
+
+.message-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.message-actions .btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+.no-messages {
+    text-align: center;
+    padding: 3rem;
+    color: var(--medium-gray);
+}
+
+.no-content-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Modal pour voir les messages */
+.message-details {
+    max-width: 100%;
+}
+
+.message-info {
+    background: var(--light-gray);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 1.5rem;
+}
+
+.info-row {
+    display: flex;
+    margin-bottom: 0.75rem;
+}
+
+.info-row:last-child {
+    margin-bottom: 0;
+}
+
+.info-label {
+    min-width: 100px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.info-value {
+    color: var(--text-light);
+    word-break: break-word;
+}
+
+.message-subject,
+.message-content {
+    margin-bottom: 1.5rem;
+}
+
+.message-subject h4,
+.message-content h4 {
+    color: var(--text-dark);
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.message-content div {
+    background: var(--primary-white);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--light-gray);
+    line-height: 1.6;
+    color: var(--text-light);
+    white-space: pre-wrap;
+}
+
+@media (max-width: 768px) {
+    .messages-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .message-header {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .message-actions {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+    
+    .info-row {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .info-label {
+        min-width: auto;
+    }
+}

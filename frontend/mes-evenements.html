@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Événements - COS Creusot</title>
+    <title>Mes Événements - COS Creusot</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/category.css">
-    <link rel="stylesheet" href="css/search.css">
     <link rel="stylesheet" href="css/calendar.css">
 </head>
 <body>
@@ -28,7 +27,7 @@
                         <li><a href="/avantages">Prestations</a></li>
                         <li><a href="/voyages">Voyages</a></li>
                         <li><a href="/retraites">Retraites</a></li>
-                        <li><a href="/evenements" class="active">Événements</a></li>
+                        <li><a href="/evenements">Événements</a></li>
                         <li><a href="/contact">Contact</a></li>
                     </ul>
                 </nav>
@@ -65,51 +64,95 @@
     <section class="page-header">
         <div class="container">
             <div class="page-header-content">
-                <div class="page-icon">🎉</div>
-                <h1>Événements</h1>
-                <p>Participez aux événements et activités organisés par le COS Creusot</p>
+                <div class="page-icon">📅</div>
+                <h1>Mes Événements</h1>
+                <p>Gérez vos inscriptions aux événements du COS Creusot</p>
             </div>
         </div>
     </section>
 
-    <!-- Member Access Notice -->
-    <section class="member-notice" id="memberNotice">
+    <!-- Navigation des onglets -->
+    <section class="tabs-section">
         <div class="container">
-            <div class="notice-card">
-                <div class="notice-icon">🔒</div>
-                <div class="notice-content">
-                    <h3>Accès réservé aux membres</h3>
-                    <p>Pour accéder au détail de tous nos événements et vous inscrire, vous devez être connecté et votre compte doit être approuvé.</p>
-                    <div class="notice-actions">
-                        <a href="/inscription" class="btn btn-primary">S'inscrire</a>
-                        <a href="/connexion" class="btn btn-outline">Se connecter</a>
+            <div class="tabs-navigation">
+                <button class="tab-btn active" data-tab="upcoming">
+                    🔜 Événements à venir
+                </button>
+                <button class="tab-btn" data-tab="past">
+                    📚 Événements passés
+                </button>
+                <button class="tab-btn" data-tab="available">
+                    🎯 Événements disponibles
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contenu des onglets -->
+    <section class="tab-content-section">
+        <div class="container">
+            <!-- Onglet des événements à venir -->
+            <div class="tab-content active" id="upcoming">
+                <div class="events-grid" id="upcomingEvents">
+                    <div class="loading">Chargement de vos événements à venir...</div>
+                </div>
+                
+                <div class="no-events" id="noUpcomingEvents" style="display: none;">
+                    <div class="no-events-content">
+                        <div class="no-events-icon">📅</div>
+                        <h3>Aucun événement à venir</h3>
+                        <p>Vous n'êtes inscrit à aucun événement à venir.</p>
+                        <a href="/evenements" class="btn btn-primary">Découvrir les événements</a>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
 
-    <!-- Calendrier des événements -->
-    <section class="calendar-section">
-        <div class="container">
-            <div class="calendar-container">
-                <!-- Le calendrier sera généré ici par JavaScript -->
+            <!-- Onglet des événements passés -->
+            <div class="tab-content" id="past">
+                <div class="events-grid" id="pastEvents">
+                    <div class="loading">Chargement de vos événements passés...</div>
+                </div>
+                
+                <div class="no-events" id="noPastEvents" style="display: none;">
+                    <div class="no-events-content">
+                        <div class="no-events-icon">📚</div>
+                        <h3>Aucun événement passé</h3>
+                        <p>Vous n'avez pas encore participé à des événements.</p>
+                    </div>
+                </div>
             </div>
-        </div>
-    </section>
 
-    <!-- Articles Section -->
-    <section class="articles-section">
-        <div class="container">
-            <div class="articles-grid" id="articlesGrid">
-                <div class="loading">Chargement des événements...</div>
-            </div>
-            
-            <div class="no-articles" id="noArticles" style="display: none;">
-                <div class="no-articles-content">
-                    <div class="no-articles-icon">📄</div>
-                    <h3>Aucun événement disponible</h3>
-                    <p>Il n'y a actuellement aucun événement publié dans cette catégorie.</p>
+            <!-- Onglet des événements disponibles -->
+            <div class="tab-content" id="available">
+                <div class="search-section">
+                    <div class="search-container">
+                        <div class="search-box">
+                            <input type="text" id="availableSearch" placeholder="Rechercher un événement...">
+                            <button class="search-btn">🔍</button>
+                        </div>
+                        
+                        <div class="filters">
+                            <select id="categoryFilter">
+                                <option value="">Toutes les catégories</option>
+                                <option value="general">Général</option>
+                                <option value="voyage">Voyage</option>
+                                <option value="retraite">Retraite</option>
+                                <option value="activite">Activité</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="events-grid" id="availableEvents">
+                    <div class="loading">Chargement des événements disponibles...</div>
+                </div>
+                
+                <div class="no-events" id="noAvailableEvents" style="display: none;">
+                    <div class="no-events-content">
+                        <div class="no-events-icon">🎯</div>
+                        <h3>Aucun événement disponible</h3>
+                        <p>Il n'y a actuellement aucun événement ouvert aux inscriptions.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -127,7 +170,7 @@
                 <div class="footer-section">
                     <h4>Liens Rapides</h4>
                     <ul>
-                        <li><a href="/avantages">Avantages</a></li>
+                        <li><a href="/avantages">Prestations</a></li>
                         <li><a href="/voyages">Voyages</a></li>
                         <li><a href="/retraites">Retraites</a></li>
                         <li><a href="/evenements">Événements</a></li>
@@ -158,24 +201,19 @@
     </footer>
 
     <script src="js/auth.js"></script>
-    <script src="js/search.js"></script>
-    <script src="js/calendar.js"></script>
     <script src="js/event-registration.js"></script>
-    <script src="js/category.js"></script>
+    <script src="js/my-events.js"></script>
     <script>
-        // Configuration spécifique pour les événements
-        window.categoryConfig = {
-            category: 'evenements',
-            title: 'Événements',
-            icon: '🎉'
-        };
-        
-        // Marquer la page comme ayant besoin du calendrier
-        document.body.classList.add('events-page');
-        
-        // Initialiser le système d'inscription aux événements
+        // Vérifier que l'utilisateur est connecté
         document.addEventListener('DOMContentLoaded', function() {
-            window.eventRegistrationManager = new EventRegistrationManager();
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Initialiser la gestion des événements utilisateur
+            window.myEventsManager = new MyEventsManager();
         });
     </script>
 </body>

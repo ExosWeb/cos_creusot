@@ -55,7 +55,8 @@ async function handleLogin(e) {
             
             // Gestion du "se souvenir de moi"
             if (rememberMe) {
-                localStorage.setItem('cos_remember', 'true');
+                localStorage.setItem('remember_me', 'true');
+                localStorage.setItem('last_email', email);
             }
 
             // Redirection après 1.5 secondes
@@ -196,8 +197,8 @@ document.addEventListener('keydown', function(e) {
 
 // Auto-complétion depuis le localStorage (si "se souvenir" était coché)
 window.addEventListener('load', function() {
-    const rememberMe = localStorage.getItem('cos_remember');
-    const lastEmail = localStorage.getItem('cos_last_email');
+    const rememberMe = localStorage.getItem('remember_me');
+    const lastEmail = localStorage.getItem('last_email');
     
     if (rememberMe === 'true' && lastEmail) {
         const emailInput = document.getElementById('email');
@@ -214,9 +215,10 @@ document.getElementById('loginForm')?.addEventListener('submit', function() {
     const rememberMe = document.getElementById('rememberMe').checked;
     
     if (rememberMe && email) {
-        localStorage.setItem('cos_last_email', email);
+        localStorage.setItem('last_email', email);
+        localStorage.setItem('remember_me', 'true');
     } else {
-        localStorage.removeItem('cos_last_email');
-        localStorage.removeItem('cos_remember');
+        localStorage.removeItem('last_email');
+        localStorage.removeItem('remember_me');
     }
 });

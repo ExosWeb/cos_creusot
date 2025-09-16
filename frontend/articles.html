@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Articles - COS Creusot</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Styles spécifiques aux articles */
+        .articles-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 80px 20px;
+            margin-bottom: 40px;
+        }
+
+        .articles-header h1 {
+            font-size: 3em;
+            margin: 0 0 20px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .articles-controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .search-filters {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            padding: 10px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 5px;
+            font-size: 16px;
+            min-width: 250px;
+        }
+
+        .filter-select {
+            padding: 10px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 5px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .create-article-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .create-article-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .article-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .article-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .article-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: #999;
+            overflow: hidden;
+        }
+
+        .article-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .article-content {
+            padding: 25px;
+        }
+
+        .article-category {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        .article-category.retraites {
+            background: #dc3545;
+        }
+
+        .article-category.general {
+            background: #28a745;
+        }
+
+        .article-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #333;
+            margin: 0 0 15px 0;
+            line-height: 1.3;
+        }
+
+        .article-excerpt {
+            color: #666;
+            line-height: 1.6;
+            margin: 0 0 20px 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .article-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #999;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .article-author {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            font-size: 18px;
+            color: #666;
+        }
+
+        .no-articles {
+            text-align: center;
+            padding: 80px 20px;
+            color: #666;
+        }
+
+        .no-articles i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+
+        /* Message d'information pour membres */
+        .member-info {
+            background: linear-gradient(45deg, #e3f2fd, #f3e5f5);
+            border: 1px solid #2196f3;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .member-info h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .member-info p {
+            margin: 0;
+            color: #555;
+        }
+
+        @media (max-width: 768px) {
+            .articles-header h1 {
+                font-size: 2em;
+            }
+
+            .articles-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-filters {
+                justify-content: stretch;
+            }
+
+            .search-input {
+                min-width: auto;
+                flex: 1;
+            }
+
+            .articles-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="index.html">COS Creusot</a>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">Accueil</a>
+                </li>
+                <li class="nav-item">
+                    <a href="prestations.html" class="nav-link">Nos Activités</a>
+                </li>
+                <li class="nav-item">
+                    <a href="articles.html" class="nav-link active">Actualités</a>
+                </li>
+                <li class="nav-item">
+                    <a href="calendar.html" class="nav-link">Calendrier</a>
+                </li>
+                <li class="nav-item">
+                    <a href="gallery.html" class="nav-link">Galerie</a>
+                </li>
+                <li class="nav-item">
+                    <a href="contact.html" class="nav-link">Contact</a>
+                </li>
+                <li class="nav-item auth-link">
+                    <a href="connexion.html" class="nav-link" id="authLink">Connexion</a>
+                </li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="articles-header">
+        <h1><i class="fas fa-newspaper"></i> Actualités</h1>
+        <p>Découvrez les dernières nouvelles et articles de notre communauté</p>
+    </div>
+
+    <div class="container">
+        <!-- Message d'information pour les membres -->
+        <div class="member-info">
+            <h3><i class="fas fa-info-circle"></i> Espace Membre</h3>
+            <p>Cette section est réservée à nos membres adhérents et retraités inscrits. Connectez-vous pour accéder aux articles exclusifs de notre communauté.</p>
+        </div>
+
+        <!-- Contrôles de recherche et création -->
+        <div class="articles-controls" id="articlesControls" style="display: none;">
+            <div class="search-filters">
+                <input type="text" id="searchInput" class="search-input" placeholder="Rechercher des articles...">
+                <select id="categoryFilter" class="filter-select">
+                    <option value="">Toutes les catégories</option>
+                    <option value="general">Général</option>
+                    <option value="retraites" id="retraitesOption">Retraités</option>
+                </select>
+            </div>
+            <div id="createButtonContainer"></div>
+        </div>
+
+        <!-- Zone d'affichage des articles -->
+        <div id="articlesContainer">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i> Vérification des autorisations...
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>COS Creusot</h3>
+                <p>Club Omnisports de Creusot - Votre partenaire sportif depuis 1985</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4>Navigation</h4>
+                <ul>
+                    <li><a href="index.html">Accueil</a></li>
+                    <li><a href="prestations.html">Nos Activités</a></li>
+                    <li><a href="calendar.html">Calendrier</a></li>
+                    <li><a href="gallery.html">Galerie</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Contact</h4>
+                <div class="contact-info">
+                    <p><i class="fas fa-map-marker-alt"></i> 123 Rue du Sport, Creusot</p>
+                    <p><i class="fas fa-phone"></i> 03 85 XX XX XX</p>
+                    <p><i class="fas fa-envelope"></i> contact@cos-creusot.fr</p>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 COS Creusot. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/navigation.js"></script>
+    <script src="js/articles-restricted.js"></script>
+</body>
+</html>

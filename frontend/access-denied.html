@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accès Restreint - COS Creusot</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .restricted-access {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .restricted-content {
+            background: white;
+            border-radius: 15px;
+            padding: 60px 40px;
+            text-align: center;
+            max-width: 600px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            margin: 0 auto;
+        }
+
+        .restricted-icon {
+            font-size: 80px;
+            color: #ffc107;
+            margin-bottom: 30px;
+            display: block;
+        }
+
+        .restricted-content h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .restricted-content p {
+            color: #666;
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .access-info {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 5px;
+            text-align: left;
+        }
+
+        .access-info h3 {
+            color: #007bff;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .access-info ul {
+            color: #555;
+            line-height: 1.8;
+            padding-left: 20px;
+        }
+
+        .access-info li {
+            margin-bottom: 8px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #0056b3, #004085);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #6c757d;
+            border: 2px solid #6c757d;
+        }
+
+        .btn-outline:hover {
+            background: #6c757d;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .contact-info {
+            background: #e9ecef;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .contact-info h3 {
+            color: #495057;
+            margin-bottom: 15px;
+        }
+
+        .contact-info p {
+            margin: 0;
+            color: #6c757d;
+        }
+
+        @media (max-width: 768px) {
+            .restricted-content {
+                padding: 40px 20px;
+                margin: 20px;
+            }
+
+            .restricted-content h1 {
+                font-size: 2em;
+            }
+
+            .btn-group {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="restricted-access">
+        <div class="restricted-content">
+            <i class="fas fa-lock restricted-icon"></i>
+            
+            <h1>Accès Restreint</h1>
+            
+            <p>
+                Les articles du COS Creusot sont réservés à nos <strong>membres adhérents</strong> 
+                et <strong>retraités inscrits</strong>. Cette mesure nous permet de préserver 
+                l'intimité et la confidentialité de notre communauté.
+            </p>
+
+            <div class="access-info">
+                <h3><i class="fas fa-info-circle"></i> Qui peut accéder aux articles ?</h3>
+                <ul>
+                    <li><strong>Membres adhérents</strong> : Accès à tous les articles généraux et activités</li>
+                    <li><strong>Retraités inscrits</strong> : Accès aux articles spécialement dédiés aux retraités</li>
+                    <li><strong>Administrateurs</strong> : Accès complet pour la gestion du site</li>
+                </ul>
+            </div>
+
+            <div class="btn-group">
+                <a href="/connexion" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Se Connecter
+                </a>
+                <a href="/inscription" class="btn btn-outline">
+                    <i class="fas fa-user-plus"></i>
+                    S'inscrire
+                </a>
+                <a href="/" class="btn btn-outline">
+                    <i class="fas fa-home"></i>
+                    Accueil
+                </a>
+            </div>
+
+            <div class="contact-info">
+                <h3><i class="fas fa-question-circle"></i> Besoin d'aide ?</h3>
+                <p>
+                    Si vous êtes membre ou retraité et rencontrez des difficultés pour accéder aux articles, 
+                    n'hésitez pas à <a href="/contact" style="color: #007bff; text-decoration: none;">nous contacter</a>.
+                    <br>Nous serons ravis de vous aider !
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+</body>
+</html>

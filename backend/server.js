@@ -12,6 +12,7 @@ const { logVisit } = require('./middleware/logger');
 const authRoutes = require('./routes/auth');
 const articleRoutes = require('./routes/articles');
 const adminRoutes = require('./routes/admin');
+const contactRoutes = require('./routes/contact');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -78,7 +79,10 @@ app.use('/api', limiter);
 // Routes API
 app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes);
+app.use('/api/articles', require('./routes/search')); // Routes de recherche
+app.use('/api/events', require('./routes/events')); // Routes d'événements
 app.use('/api/admin', adminRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Servir les fichiers statiques du frontend
 app.use(express.static(path.join(__dirname, '../frontend')));
@@ -114,6 +118,27 @@ app.get('/retraites', (req, res) => {
 
 app.get('/evenements', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/evenements.html'));
+});
+
+app.get('/articles', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/articles.html'));
+});
+
+app.get('/mes-evenements', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/mes-evenements.html'));
+});
+
+app.get('/contact', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/contact.html'));
+});
+
+app.get('/access-denied', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/access-denied.html'));
+});
+
+// Route pour les articles individuels
+app.get('/article/:id', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/article.html'));
 });
 
 // Route catch-all pour les URLs non trouvées (SPA)
@@ -152,6 +177,17 @@ const startServer = async () => {
         process.exit(1);
     }
 };
+
+// Gestion des erreurs non capturées
+process.on('uncaughtException', (error) => {
+    console.error('❌ Erreur non capturée:', error);
+    // Ne pas arrêter le serveur pour les erreurs non critiques
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Promise rejetée non gérée:', reason, 'à', promise);
+    // Ne pas arrêter le serveur pour les promesses rejetées
+});
 
 // Gestion propre de l'arrêt
 process.on('SIGINT', () => {

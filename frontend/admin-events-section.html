@@ -1,0 +1,225 @@
+<!-- Section de gestion des événements dans admin.html -->
+<section class="admin-section" id="events-section" style="display: none;">
+    <div class="section-header">
+        <h2>🎉 Gestion des Événements</h2>
+        <button class="btn-primary" id="addEventBtn">➕ Nouvel Événement</button>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-info">
+                <h3 id="totalEvents">0</h3>
+                <p>Total Événements</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🔜</div>
+            <div class="stat-info">
+                <h3 id="upcomingEvents">0</h3>
+                <p>À Venir</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-info">
+                <h3 id="totalRegistrations">0</h3>
+                <p>Total Inscriptions</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-info">
+                <h3 id="avgParticipants">0</h3>
+                <p>Moy. Participants</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres pour les événements -->
+    <div class="filters-section">
+        <div class="filters-row">
+            <select id="eventsStatusFilter">
+                <option value="">Tous les statuts</option>
+                <option value="draft">Brouillon</option>
+                <option value="published">Publié</option>
+                <option value="cancelled">Annulé</option>
+            </select>
+
+            <select id="eventsCategoryFilter">
+                <option value="">Toutes les catégories</option>
+                <option value="general">Général</option>
+                <option value="voyage">Voyage</option>
+                <option value="retraite">Retraite</option>
+                <option value="activite">Activité</option>
+            </select>
+
+            <input type="text" id="eventsSearchFilter" placeholder="Rechercher un événement...">
+            
+            <button class="btn-outline" id="refreshEventsBtn">🔄 Actualiser</button>
+        </div>
+    </div>
+
+    <!-- Table des événements -->
+    <div class="table-container">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Titre</th>
+                    <th>Date</th>
+                    <th>Catégorie</th>
+                    <th>Inscriptions</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="eventsTableBody">
+                <tr>
+                    <td colspan="6" class="text-center">
+                        <div class="loading">Chargement des événements...</div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="eventsPagination">
+        <!-- Généré par JavaScript -->
+    </div>
+</section>
+
+<!-- Modale pour créer/éditer un événement -->
+<div class="modal" id="eventModal" style="display: none;">
+    <div class="modal-content large-modal">
+        <div class="modal-header">
+            <h3 id="eventModalTitle">Nouvel Événement</h3>
+            <button class="modal-close" id="closeEventModal">&times;</button>
+        </div>
+        
+        <form id="eventForm" class="modal-body">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="eventTitle">Titre de l'événement *</label>
+                    <input type="text" id="eventTitle" name="title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="eventCategory">Catégorie</label>
+                    <select id="eventCategory" name="category">
+                        <option value="general">Général</option>
+                        <option value="voyage">Voyage</option>
+                        <option value="retraite">Retraite</option>
+                        <option value="activite">Activité</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="eventDescription">Description</label>
+                <textarea id="eventDescription" name="description" rows="4"></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="eventStartDate">Date de début *</label>
+                    <input type="date" id="eventStartDate" name="start_date" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventEndDate">Date de fin</label>
+                    <input type="date" id="eventEndDate" name="end_date">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="eventStartTime">Heure de début *</label>
+                    <input type="time" id="eventStartTime" name="start_time" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventEndTime">Heure de fin</label>
+                    <input type="time" id="eventEndTime" name="end_time">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="eventLocation">Lieu</label>
+                    <input type="text" id="eventLocation" name="location">
+                </div>
+
+                <div class="form-group">
+                    <label for="eventMaxParticipants">Nombre max de participants</label>
+                    <input type="number" id="eventMaxParticipants" name="max_participants" min="1">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="eventMemberOnly" name="is_member_only">
+                        Réservé aux membres uniquement
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventStatus">Statut</label>
+                    <select id="eventStatus" name="status">
+                        <option value="draft">Brouillon</option>
+                        <option value="published">Publié</option>
+                        <option value="cancelled">Annulé</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-outline" id="cancelEventBtn">Annuler</button>
+            <button type="submit" class="btn-primary" id="saveEventBtn">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modale pour voir les inscriptions d'un événement -->
+<div class="modal" id="registrationsModal" style="display: none;">
+    <div class="modal-content large-modal">
+        <div class="modal-header">
+            <h3 id="registrationsModalTitle">Inscriptions à l'événement</h3>
+            <button class="modal-close" id="closeRegistrationsModal">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="registrations-actions">
+                <button class="btn-outline" id="exportRegistrationsBtn">📥 Exporter CSV</button>
+                <span id="registrationsCount">0 inscription(s)</span>
+            </div>
+
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Email</th>
+                            <th>Téléphone</th>
+                            <th>Date d'inscription</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody id="registrationsTableBody">
+                        <tr>
+                            <td colspan="5" class="text-center">
+                                <div class="loading">Chargement des inscriptions...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-outline" id="closeRegistrationsBtn">Fermer</button>
+        </div>
+    </div>
+</div>

@@ -10,9 +10,8 @@ const dbConfig = {
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
-    acquireTimeout: 60000,
-    timeout: 60000,
-    reconnect: true
+    idleTimeout: 300000,   // Fermer les connexions inactives après 5 min
+    enableKeepAlive: true  // Garder les connexions vivantes
 };
 
 // Créer le pool de connexions

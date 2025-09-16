@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
-const { authenticateToken, requireAdmin, logAction } = require('../middleware/auth');
+const { authenticateToken, requireAdmin, requireMemberOrRetraite, filterArticlesByRole, logAction } = require('../middleware/auth');
 
-// Récupérer tous les articles publiés
-router.get('/', async (req, res) => {
+// Récupérer tous les articles publics (sans authentification) 
+router.get('/public', async (req, res) => {
     try {
         const [articles] = await pool.query(`
             SELECT 
@@ -13,13 +13,80 @@ router.get('/', async (req, res) => {
                 u.lastname
             FROM articles a
             LEFT JOIN users u ON a.author_id = u.id
-            WHERE a.status = 'published'
+            WHERE a.status = 'published' AND (a.visibility IS NULL OR a.visibility = 'public')
             ORDER BY a.featured DESC, a.created_at DESC
         `);
         
         res.json(articles);
     } catch (error) {
+        console.error('Erreur lors de la récupération des articles publics:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// Récupérer tous les articles publiés (RESTREINT aux membres et retraités)
+router.get('/', authenticateToken, requireMemberOrRetraite, async (req, res) => {
+    try {
+        let sql = `
+            SELECT 
+                a.*,
+                u.firstname,
+                u.lastname
+            FROM articles a
+            LEFT JOIN users u ON a.author_id = u.id
+            WHERE a.status = 'published'
+        `;
+        
+        // Filtrer selon le rôle de l'utilisateur
+        const userRole = req.user.role;
+        if (userRole === 'adherent') {
+            sql += ` AND (a.visibility = 'public' OR a.visibility = 'adherent' OR a.visibility = 'adherent_retraite')`;
+        } else if (userRole === 'retraite') {
+            sql += ` AND (a.visibility = 'public' OR a.visibility = 'retraite' OR a.visibility = 'adherent_retraite')`;
+        } else if (userRole === 'admin') {
+            // Les admins voient tout
+        }
+        
+        sql += ` ORDER BY a.featured DESC, a.created_at DESC`;
+        
+        const [articles] = await pool.query(sql);
+        
+        res.json(articles);
+    } catch (error) {
         console.error('Erreur lors de la récupération des articles:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// Récupérer les articles selon le rôle de l'utilisateur connecté
+router.get('/user-articles', authenticateToken, requireMemberOrRetraite, async (req, res) => {
+    try {
+        let sql = `
+            SELECT 
+                a.*,
+                u.firstname,
+                u.lastname
+            FROM articles a
+            LEFT JOIN users u ON a.author_id = u.id
+            WHERE a.status = 'published'
+        `;
+        
+        // Filtrer selon le rôle de l'utilisateur
+        const userRole = req.user.role;
+        if (userRole === 'adherent') {
+            sql += ` AND (a.visibility = 'public' OR a.visibility = 'adherent' OR a.visibility = 'adherent_retraite')`;
+        } else if (userRole === 'retraite') {
+            sql += ` AND (a.visibility = 'public' OR a.visibility = 'retraite' OR a.visibility = 'adherent_retraite')`;
+        } else if (userRole === 'admin') {
+            // Les admins voient tout
+        }
+        
+        sql += ` ORDER BY a.featured DESC, a.created_at DESC`;
+        
+        const [articles] = await pool.query(sql);
+        res.json(articles);
+    } catch (error) {
+        console.error('Erreur lors de la récupération des articles utilisateur:', error);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
@@ -48,14 +115,129 @@ router.get('/featured', async (req, res) => {
     }
 });
 
-// Récupérer les articles par catégorie
+// Récupérer un article individuel par ID (RESTREINT aux membres et retraités)
+router.get('/:id', authenticateToken, requireMemberOrRetraite, filterArticlesByRole, async (req, res) => {
+    try {
+        const articleId = parseInt(req.params.id);
+        
+        if (isNaN(articleId)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'ID d\'article invalide' 
+            });
+        }
+
+        const [articles] = await pool.query(`
+            SELECT 
+                a.*,
+                u.firstname,
+                u.lastname
+            FROM articles a
+            LEFT JOIN users u ON a.author_id = u.id
+            WHERE a.id = ? AND a.status = 'published'
+        `, [articleId]);
+        
+        if (articles.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Article non trouvé' 
+            });
+        }
+
+        const article = articles[0];
+
+        // Vérifier l'accès pour les articles membres uniquement
+        if (article.is_member_only) {
+            const token = req.headers.authorization?.split(' ')[1];
+            
+            if (!token) {
+                return res.status(403).json({ 
+                    success: false, 
+                    message: 'Accès réservé aux membres connectés',
+                    requiresAuth: true
+                });
+            }
+
+            // Validation simplifiée du token pour cette route
+            try {
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'cos-creusot-secret-key');
+                
+                if (!decoded.isApproved) {
+                    return res.status(403).json({ 
+                        success: false, 
+                        message: 'Votre compte doit être approuvé pour accéder à ce contenu',
+                        requiresApproval: true
+                    });
+                }
+            } catch (error) {
+                return res.status(401).json({ 
+                    success: false, 
+                    message: 'Token invalide ou expiré',
+                    requiresAuth: true
+                });
+            }
+        }
+
+        res.json({ 
+            success: true, 
+            article 
+        });
+
+    } catch (error) {
+        console.error('Erreur lors de la récupération de l\'article:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de la récupération de l\'article' 
+        });
+    }
+});
+
+// Récupérer les articles par catégorie (public, sauf retraites)
 router.get('/category/:category', async (req, res) => {
     try {
         const { category } = req.params;
-        const validCategories = ['general', 'avantages', 'voyages', 'retraites', 'evenements'];
+        const validCategories = ['general', 'avantages', 'prestations', 'voyages', 'evenements'];
+        
+        if (!validCategories.includes(category)) {
+            return res.status(400).json({ error: 'Catégorie invalide ou accès non autorisé' });
+        }
+        
+        const [articles] = await pool.query(`
+            SELECT 
+                a.*,
+                u.firstname,
+                u.lastname
+            FROM articles a
+            LEFT JOIN users u ON a.author_id = u.id
+            WHERE a.category = ? AND a.status = 'published'
+            ORDER BY a.featured DESC, a.created_at DESC
+        `, [category]);
+        
+        res.json(articles);
+    } catch (error) {
+        console.error('Erreur lors de la récupération des articles par catégorie:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// Récupérer les articles par catégorie avec authentification (pour accéder aux retraites)
+router.get('/user-category/:category', authenticateToken, requireMemberOrRetraite, filterArticlesByRole, async (req, res) => {
+    try {
+        const { category } = req.params;
+        const validCategories = ['general', 'avantages', 'prestations', 'voyages', 'retraites', 'evenements'];
         
         if (!validCategories.includes(category)) {
             return res.status(400).json({ error: 'Catégorie invalide' });
+        }
+        
+        // Vérifier l'accès selon le rôle
+        if (category === 'retraites' && req.user.role !== 'retraite' && req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Accès non autorisé à cette catégorie' });
+        }
+        
+        if (category !== 'retraites' && req.user.role === 'retraite') {
+            return res.status(403).json({ error: 'Accès limité aux articles retraités' });
         }
         
         const [articles] = await pool.query(`
@@ -102,8 +284,8 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Créer un nouvel article (utilisateurs connectés uniquement)
-router.post('/', authenticateToken, async (req, res) => {
+// Créer un nouvel article (RESTREINT aux membres et retraités)
+router.post('/', authenticateToken, requireMemberOrRetraite, async (req, res) => {
     try {
         const { 
             title, 
@@ -112,15 +294,17 @@ router.post('/', authenticateToken, async (req, res) => {
             status = 'draft',
             excerpt = null,
             image_url = null,
-            featured = false
+            featured = false,
+            visibility = 'public'
         } = req.body;
         
         if (!title || !content) {
             return res.status(400).json({ error: 'Le titre et le contenu sont requis' });
         }
         
-        const validCategories = ['general', 'avantages', 'voyages', 'retraites', 'evenements'];
+        const validCategories = ['general', 'prestations', 'avantages', 'voyages', 'retraites', 'evenements'];
         const validStatuses = ['draft', 'published'];
+        const validVisibilities = ['public', 'adherent', 'retraite', 'adherent_retraite'];
         
         if (!validCategories.includes(category)) {
             return res.status(400).json({ error: 'Catégorie invalide' });
@@ -130,9 +314,13 @@ router.post('/', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Statut invalide' });
         }
         
+        if (!validVisibilities.includes(visibility)) {
+            return res.status(400).json({ error: 'Visibilité invalide' });
+        }
+        
         const [result] = await pool.query(`
-            INSERT INTO articles (title, content, excerpt, category, status, featured, image_url, author_id, published_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO articles (title, content, excerpt, category, status, featured, image_url, visibility, author_id, published_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [
             title, 
             content, 
@@ -141,6 +329,7 @@ router.post('/', authenticateToken, async (req, res) => {
             status, 
             featured, 
             image_url, 
+            visibility,
             req.user.id,
             status === 'published' ? new Date() : null
         ]);

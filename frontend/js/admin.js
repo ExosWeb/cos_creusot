@@ -49,6 +49,11 @@ function initTabs() {
                 }
             });
 
+            // Émettre un événement personnalisé pour informer des changements d'onglet
+            document.dispatchEvent(new CustomEvent('tabChanged', {
+                detail: { tabId: targetTab }
+            }));
+
             // Charger le contenu de l'onglet
             loadTabContent(targetTab);
         });
@@ -66,6 +71,18 @@ async function loadTabContent(tabName) {
             break;
         case 'articles':
             await loadArticles();
+            break;
+        case 'events':
+            // Les événements sont gérés par AdminEventsManager
+            if (!window.adminEventsManager) {
+                window.adminEventsManager = new AdminEventsManager();
+            }
+            break;
+        case 'messages':
+            await loadMessages();
+            break;
+        case 'logs':
+            await loadLogs();
             break;
         case 'logs':
             await loadLogs();
@@ -378,6 +395,64 @@ function bindAdminEvents() {
     if (logTypeFilter) {
         logTypeFilter.addEventListener('change', loadLogs);
     }
+
+    // Messages - Filtre par statut
+    const messageStatusFilter = document.getElementById('messageStatusFilter');
+    if (messageStatusFilter) {
+        messageStatusFilter.addEventListener('change', (e) => {
+            loadMessages(e.target.value);
+        });
+    }
+
+    // Messages - Marquer tout comme lu
+    const markAllReadBtn = document.getElementById('markAllReadBtn');
+    if (markAllReadBtn) {
+        markAllReadBtn.addEventListener('click', markAllMessagesAsRead);
+    }
+
+    // Modal message - Boutons
+    const closeMessageModal = document.getElementById('closeMessageModal');
+    const closeMessageDetailBtn = document.getElementById('closeMessageDetailBtn');
+    const markAsReadBtn = document.getElementById('markAsReadBtn');
+    const markAsRepliedBtn = document.getElementById('markAsRepliedBtn');
+
+    if (closeMessageModal) {
+        closeMessageModal.addEventListener('click', () => {
+            document.getElementById('messageModal').style.display = 'none';
+        });
+    }
+
+    if (closeMessageDetailBtn) {
+        closeMessageDetailBtn.addEventListener('click', () => {
+            document.getElementById('messageModal').style.display = 'none';
+        });
+    }
+
+    if (markAsReadBtn) {
+        markAsReadBtn.addEventListener('click', () => {
+            if (currentMessageId) {
+                markAsRead(currentMessageId);
+            }
+        });
+    }
+
+    if (markAsRepliedBtn) {
+        markAsRepliedBtn.addEventListener('click', () => {
+            if (currentMessageId) {
+                markAsReplied(currentMessageId);
+            }
+        });
+    }
+
+    // Fermer modal en cliquant à l'extérieur
+    const messageModal = document.getElementById('messageModal');
+    if (messageModal) {
+        messageModal.addEventListener('click', (e) => {
+            if (e.target === messageModal) {
+                messageModal.style.display = 'none';
+            }
+        });
+    }
 }
 
 // Actions articles
@@ -671,7 +746,8 @@ async function handleArticleSubmit(e) {
         status: formData.get('status'),
         excerpt: formData.get('excerpt').trim() || null,
         image_url: formData.get('image_url').trim() || null,
-        featured: formData.has('featured')
+        featured: formData.has('featured'),
+        visibility: formData.get('visibility')
     };
     
     // Validation avancée
@@ -1027,4 +1103,274 @@ function initUserFilters() {
 
 function filterUsers() {
     // Implémentation du filtrage
+}
+
+// ===========================
+// GESTION DES MESSAGES
+// ===========================
+
+let currentMessages = [];
+let currentMessageId = null;
+
+async function loadMessages(status = '') {
+    try {
+        const url = status ? `/api/admin/messages?status=${status}` : '/api/admin/messages';
+        const response = await window.authManager.makeAuthenticatedRequest(url);
+        
+        if (!response.ok) {
+            throw new Error('Erreur lors de la récupération des messages');
+        }
+        
+        const data = await response.json();
+        currentMessages = data.messages;
+        
+        // Mettre à jour les statistiques
+        updateMessagesStats(data.stats);
+        
+        // Afficher les messages
+        displayMessages(currentMessages);
+        
+    } catch (error) {
+        console.error('Erreur lors du chargement des messages:', error);
+        document.getElementById('messagesList').innerHTML = `
+            <div class="error">
+                <p>❌ Erreur lors du chargement des messages</p>
+                <button onclick="loadMessages()" class="btn btn-primary">Réessayer</button>
+            </div>
+        `;
+    }
+}
+
+function updateMessagesStats(stats) {
+    document.getElementById('totalMessages').textContent = stats.total || 0;
+    document.getElementById('newMessages').textContent = stats.new_count || 0;
+    document.getElementById('repliedMessages').textContent = stats.replied_count || 0;
+}
+
+function displayMessages(messages) {
+    const container = document.getElementById('messagesList');
+    
+    if (messages.length === 0) {
+        container.innerHTML = `
+            <div class="no-messages">
+                <div class="no-content-icon">📬</div>
+                <h3>Aucun message</h3>
+                <p>Il n'y a aucun message de contact pour le moment.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const messagesHtml = messages.map(message => createMessageCard(message)).join('');
+    container.innerHTML = `
+        <div class="messages-grid">
+            ${messagesHtml}
+        </div>
+    `;
+}
+
+function createMessageCard(message) {
+    const statusColors = {
+        'new': '#e74c3c',
+        'read': '#f39c12', 
+        'replied': '#27ae60'
+    };
+    
+    const statusLabels = {
+        'new': 'Nouveau',
+        'read': 'Lu',
+        'replied': 'Répondu'
+    };
+    
+    const date = new Date(message.created_at).toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    return `
+        <div class="message-card ${message.status}" data-message-id="${message.id}">
+            <div class="message-header">
+                <div class="message-sender">
+                    <strong>${window.utils.escapeHtml(message.name)}</strong>
+                    <span class="message-email">${window.utils.escapeHtml(message.email)}</span>
+                </div>
+                <div class="message-status" style="color: ${statusColors[message.status]};">
+                    ${statusLabels[message.status]}
+                </div>
+            </div>
+            
+            <div class="message-subject">
+                <h4>${window.utils.escapeHtml(message.subject)}</h4>
+            </div>
+            
+            <div class="message-preview">
+                ${window.utils.truncateText(message.message, 150)}
+            </div>
+            
+            <div class="message-footer">
+                <span class="message-date">${date}</span>
+                <div class="message-actions">
+                    <button class="btn btn-sm btn-outline" onclick="viewMessage(${message.id})">
+                        👁️ Voir
+                    </button>
+                    ${message.status === 'new' ? `
+                        <button class="btn btn-sm btn-primary" onclick="markAsRead(${message.id})">
+                            ✓ Lu
+                        </button>
+                    ` : ''}
+                    <button class="btn btn-sm btn-danger" onclick="deleteMessage(${message.id})">
+                        🗑️ Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+async function viewMessage(messageId) {
+    try {
+        const response = await window.authManager.makeAuthenticatedRequest(`/api/admin/messages/${messageId}`);
+        
+        if (!response.ok) {
+            throw new Error('Erreur lors de la récupération du message');
+        }
+        
+        const message = await response.json();
+        currentMessageId = messageId;
+        
+        // Remplir le modal avec les données du message
+        document.getElementById('messageSender').textContent = message.name;
+        document.getElementById('messageEmail').textContent = message.email;
+        document.getElementById('messagePhone').textContent = message.phone || 'Non renseigné';
+        document.getElementById('messageDate').textContent = new Date(message.created_at).toLocaleString('fr-FR');
+        document.getElementById('messageStatus').textContent = getStatusLabel(message.status);
+        document.getElementById('messageSubjectText').textContent = message.subject;
+        document.getElementById('messageContentText').innerHTML = message.message.replace(/\n/g, '<br>');
+        
+        // Adapter les boutons selon le statut
+        const markAsReadBtn = document.getElementById('markAsReadBtn');
+        const markAsRepliedBtn = document.getElementById('markAsRepliedBtn');
+        
+        markAsReadBtn.style.display = message.status === 'new' ? 'inline-block' : 'none';
+        markAsRepliedBtn.style.display = message.status !== 'replied' ? 'inline-block' : 'none';
+        
+        // Afficher le modal
+        document.getElementById('messageModal').style.display = 'flex';
+        
+        // Marquer automatiquement comme lu si c'est nouveau
+        if (message.status === 'new') {
+            await updateMessageStatus(messageId, 'read');
+        }
+        
+    } catch (error) {
+        console.error('Erreur lors de la visualisation du message:', error);
+        window.authManager.showAlert('Erreur lors de la visualisation du message', 'error');
+    }
+}
+
+function getStatusLabel(status) {
+    const labels = {
+        'new': 'Nouveau',
+        'read': 'Lu',
+        'replied': 'Répondu'
+    };
+    return labels[status] || status;
+}
+
+async function markAsRead(messageId) {
+    await updateMessageStatus(messageId, 'read');
+}
+
+async function markAsReplied(messageId) {
+    await updateMessageStatus(messageId, 'replied');
+}
+
+async function updateMessageStatus(messageId, status) {
+    try {
+        const response = await window.authManager.makeAuthenticatedRequest(
+            `/api/admin/messages/${messageId}/status`,
+            {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            }
+        );
+        
+        if (!response.ok) {
+            throw new Error('Erreur lors de la mise à jour du statut');
+        }
+        
+        window.authManager.showAlert('Statut mis à jour', 'success');
+        
+        // Recharger les messages
+        const currentFilter = document.getElementById('messageStatusFilter').value;
+        await loadMessages(currentFilter);
+        
+        // Fermer le modal si ouvert
+        document.getElementById('messageModal').style.display = 'none';
+        
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour du statut:', error);
+        window.authManager.showAlert('Erreur lors de la mise à jour du statut', 'error');
+    }
+}
+
+async function deleteMessage(messageId) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce message ?')) {
+        return;
+    }
+    
+    try {
+        const response = await window.authManager.makeAuthenticatedRequest(
+            `/api/admin/messages/${messageId}`,
+            { method: 'DELETE' }
+        );
+        
+        if (!response.ok) {
+            throw new Error('Erreur lors de la suppression du message');
+        }
+        
+        window.authManager.showAlert('Message supprimé', 'success');
+        
+        // Recharger les messages
+        const currentFilter = document.getElementById('messageStatusFilter').value;
+        await loadMessages(currentFilter);
+        
+        // Fermer le modal si ouvert
+        document.getElementById('messageModal').style.display = 'none';
+        
+    } catch (error) {
+        console.error('Erreur lors de la suppression du message:', error);
+        window.authManager.showAlert('Erreur lors de la suppression du message', 'error');
+    }
+}
+
+async function markAllMessagesAsRead() {
+    if (!confirm('Marquer tous les nouveaux messages comme lus ?')) {
+        return;
+    }
+    
+    try {
+        const response = await window.authManager.makeAuthenticatedRequest(
+            '/api/admin/messages/mark-all-read',
+            { method: 'PUT' }
+        );
+        
+        if (!response.ok) {
+            throw new Error('Erreur lors de la mise à jour');
+        }
+        
+        window.authManager.showAlert('Tous les messages ont été marqués comme lus', 'success');
+        
+        // Recharger les messages
+        const currentFilter = document.getElementById('messageStatusFilter').value;
+        await loadMessages(currentFilter);
+        
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour:', error);
+        window.authManager.showAlert('Erreur lors de la mise à jour', 'error');
+    }
 }

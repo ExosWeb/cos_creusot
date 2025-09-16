@@ -264,4 +264,203 @@ router.get('/logs/action', logAction('view_action_logs'), async (req, res) => {
     }
 });
 
+// GET - Statistiques des événements
+router.get('/stats/events', async (req, res) => {
+    try {
+        // Statistiques générales des événements
+        const [eventStats] = await pool.execute(`
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'published' AND start_date >= CURDATE() THEN 1 ELSE 0 END) as upcoming,
+                SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as drafts,
+                SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
+            FROM events
+        `);
+
+        // Statistiques des inscriptions
+        const [registrationStats] = await pool.execute(`
+            SELECT 
+                COUNT(*) as total_registrations,
+                COUNT(DISTINCT event_id) as events_with_registrations
+            FROM event_registrations
+            WHERE status = 'registered'
+        `);
+
+        // Moyenne des participants par événement
+        const [avgStats] = await pool.execute(`
+            SELECT 
+                ROUND(AVG(participants_count), 1) as avg_participants
+            FROM (
+                SELECT 
+                    e.id,
+                    COUNT(er.id) as participants_count
+                FROM events e
+                LEFT JOIN event_registrations er ON e.id = er.event_id AND er.status = 'registered'
+                WHERE e.status = 'published'
+                GROUP BY e.id
+            ) as event_counts
+        `);
+
+        const stats = {
+            total: eventStats[0].total || 0,
+            upcoming: eventStats[0].upcoming || 0,
+            drafts: eventStats[0].drafts || 0,
+            cancelled: eventStats[0].cancelled || 0,
+            total_registrations: registrationStats[0].total_registrations || 0,
+            events_with_registrations: registrationStats[0].events_with_registrations || 0,
+            avg_participants: avgStats[0].avg_participants || 0
+        };
+
+        res.json({
+            success: true,
+            stats
+        });
+
+    } catch (error) {
+        console.error('Erreur lors de la récupération des statistiques d\'événements:', error);
+        // Retourner des valeurs par défaut en cas d'erreur
+        res.json({
+            success: true,
+            stats: {
+                total: 0,
+                upcoming: 0,
+                drafts: 0,
+                cancelled: 0,
+                total_registrations: 0,
+                events_with_registrations: 0,
+                avg_participants: 0
+            }
+        });
+    }
+});
+
+// Messages de contact - Récupérer tous les messages
+router.get('/messages', async (req, res) => {
+    try {
+        const { status } = req.query;
+        
+        let sql = `
+            SELECT 
+                id,
+                name,
+                email,
+                phone,
+                subject,
+                message,
+                status,
+                created_at,
+                updated_at
+            FROM contact_messages
+        `;
+        
+        const params = [];
+        
+        if (status && status !== '') {
+            sql += ' WHERE status = ?';
+            params.push(status);
+        }
+        
+        sql += ' ORDER BY created_at DESC';
+        
+        const [messages] = await pool.query(sql, params);
+        
+        // Statistiques
+        const [stats] = await pool.query(`
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'new' THEN 1 ELSE 0 END) as new_count,
+                SUM(CASE WHEN status = 'read' THEN 1 ELSE 0 END) as read_count,
+                SUM(CASE WHEN status = 'replied' THEN 1 ELSE 0 END) as replied_count
+            FROM contact_messages
+        `);
+        
+        res.json({
+            messages,
+            stats: stats[0]
+        });
+        
+    } catch (error) {
+        console.error('Erreur lors de la récupération des messages:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// Messages de contact - Récupérer un message spécifique
+router.get('/messages/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const [messages] = await pool.query(`
+            SELECT * FROM contact_messages WHERE id = ?
+        `, [id]);
+        
+        if (messages.length === 0) {
+            return res.status(404).json({ error: 'Message non trouvé' });
+        }
+        
+        res.json(messages[0]);
+        
+    } catch (error) {
+        console.error('Erreur lors de la récupération du message:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// Messages de contact - Mettre à jour le statut d'un message
+router.put('/messages/:id/status', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        
+        const validStatuses = ['new', 'read', 'replied'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ error: 'Statut invalide' });
+        }
+        
+        await pool.query(`
+            UPDATE contact_messages 
+            SET status = ?, updated_at = NOW() 
+            WHERE id = ?
+        `, [status, id]);
+        
+        res.json({ message: 'Statut mis à jour' });
+        
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour du statut:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// Messages de contact - Marquer tous les messages comme lus
+router.put('/messages/mark-all-read', async (req, res) => {
+    try {
+        await pool.query(`
+            UPDATE contact_messages 
+            SET status = 'read', updated_at = NOW() 
+            WHERE status = 'new'
+        `);
+        
+        res.json({ message: 'Tous les messages ont été marqués comme lus' });
+        
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour des messages:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// Messages de contact - Supprimer un message
+router.delete('/messages/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        await pool.query('DELETE FROM contact_messages WHERE id = ?', [id]);
+        
+        res.json({ message: 'Message supprimé' });
+        
+    } catch (error) {
+        console.error('Erreur lors de la suppression du message:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
 module.exports = router;

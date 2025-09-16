@@ -1,16 +1,16 @@
-/* Variables CSS pour le thème Rouge, Blanc, Bleu */
+/* Variables CSS pour le thème Rouge, Blanc, Bleu - BOUTONS EN BLEU */
 :root {
-    --primary-red: #c41e3a;
+    --primary-red: #1f4788; /* Changé de rouge à bleu */
     --primary-blue: #1f4788;
     --primary-white: #ffffff;
-    --secondary-red: #e53e3e;
+    --secondary-red: #2d5aa0; /* Changé de rouge à bleu */
     --secondary-blue: #2d5aa0;
     --light-gray: #f8f9fa;
     --medium-gray: #6c757d;
     --dark-gray: #343a40;
     --success-green: #28a745;
     --warning-yellow: #ffc107;
-    --danger-red: #dc3545;
+    --danger-red: #dc3545; /* Conservé pour les erreurs */
     --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.15);
     --border-radius: 8px;
@@ -155,21 +155,38 @@ a:hover {
     padding: 1rem 0;
 }
 
-.logo h1 {
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo-icon {
+    font-size: 2.5rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.logo-text h1 {
     color: var(--primary-white);
     font-size: 1.75rem;
     margin: 0;
+    font-weight: 700;
 }
 
-.logo span {
+.logo-text span {
     color: rgba(255, 255, 255, 0.8);
     font-size: 0.875rem;
     font-weight: 400;
+    display: block;
+    line-height: 1.2;
 }
 
 .logo a {
     text-decoration: none;
     color: inherit;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
 .main-nav ul {
@@ -266,6 +283,28 @@ a:hover {
 
 .btn-admin a {
     color: var(--primary-blue);
+    text-decoration: none;
+}
+
+.btn-my-events {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+    width: 100%;
+    text-align: center;
+}
+
+.btn-my-events:hover {
+    background: #218838;
+}
+
+.btn-my-events a {
+    color: inherit;
     text-decoration: none;
 }
 

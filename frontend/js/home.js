@@ -4,10 +4,24 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function initHomePage() {
+    // Attendre que l'authentication manager soit initialisé
+    if (window.authManager) {
+        await window.authManager.init();
+    }
+    
     await loadFeaturedArticles();
     await loadLatestArticles();
     initLoadMoreButton();
 }
+
+// Fonction pour recharger les articles après connexion/déconnexion
+async function refreshArticlesForAuthState() {
+    console.log('🔄 Rechargement des articles après changement d\'authentification');
+    await loadLatestArticles(true); // reset = true pour recharger depuis le début
+}
+
+// Exposer la fonction globalement pour que auth.js puisse l'utiliser
+window.refreshArticlesForAuthState = refreshArticlesForAuthState;
 
 // Chargement des articles mis en avant
 async function loadFeaturedArticles() {
@@ -54,10 +68,27 @@ async function loadLatestArticles(reset = false) {
         if (reset) {
             currentPage = 0;
             hasMoreArticles = true;
+            utils.showLoading(container, true);
         }
 
-        const response = await fetch(`/api/articles?limit=6&offset=${currentPage * 6}`);
+        // Utiliser la route appropriée selon l'état de connexion
+        const authManager = window.authManager;
+        let apiUrl = `/api/articles?limit=6&offset=${currentPage * 6}`;
+        
+        if (authManager && authManager.isAuthenticated()) {
+            apiUrl = `/api/articles/user-articles?limit=6&offset=${currentPage * 6}`;
+        }
+        
+        const headers = {};
+        if (authManager && authManager.token) {
+            headers['Authorization'] = `Bearer ${authManager.token}`;
+        }
+        
+        const response = await fetch(apiUrl, { headers });
         const articles = await response.json();
+
+        // Supprimer l'indicateur de chargement
+        utils.showLoading(container, false);
 
         if (articles.length === 0) {
             if (currentPage === 0) {
@@ -88,10 +119,14 @@ async function loadLatestArticles(reset = false) {
 
     } catch (error) {
         console.error('Erreur lors du chargement des articles:', error);
+        utils.showLoading(container, false);
+        
         if (reset) {
             container.innerHTML = `
                 <div class="error">
-                    <p>Erreur lors du chargement des articles.</p>
+                    <h3>⚠️ Erreur de chargement</h3>
+                    <p>Impossible de charger les articles.</p>
+                    <button onclick="loadLatestArticles(true)" class="btn btn-primary">Réessayer</button>
                 </div>
             `;
         }

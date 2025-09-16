@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact - COS Creusot</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/contact.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="/">
+                        <div class="logo-icon">🏛️</div>
+                        <div class="logo-text">
+                            <h1>COS Creusot</h1>
+                            <span>Comité des Œuvres Sociales</span>
+                        </div>
+                    </a>
+                </div>
+                
+                <nav class="main-nav" id="mainNav">
+                    <ul>
+                        <li><a href="/">Accueil</a></li>
+                        <li><a href="/avantages">Prestations</a></li>
+                        <li><a href="/voyages">Voyages</a></li>
+                        <li><a href="/retraites">Retraites</a></li>
+                        <li><a href="/evenements">Événements</a></li>
+                        <li><a href="/contact" class="active">Contact</a></li>
+                    </ul>
+                </nav>
+
+                <div class="auth-section" id="authSection">
+                    <div class="auth-buttons" id="authButtons">
+                        <a href="/connexion" class="btn btn-outline">Connexion</a>
+                        <a href="/inscription" class="btn btn-primary">Inscription</a>
+                    </div>
+                    
+                    <div class="user-menu" id="userMenu" style="display: none;">
+                        <div class="user-info">
+                            <span id="userName"></span>
+                            <div class="user-dropdown">
+                                <button class="btn-admin" id="adminBtn" style="display: none;">
+                                    <a href="/admin">Administration</a>
+                                </button>
+                                <button class="btn-logout" id="logoutBtn">Déconnexion</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contact Section -->
+    <main class="main-content">
+        <div class="container">
+            <div class="contact-wrapper">
+                <div class="contact-header">
+                    <h1>📞 Contactez-nous</h1>
+                    <p>Nous sommes là pour répondre à vos questions et vous accompagner</p>
+                </div>
+
+                <div class="contact-content">
+                    <!-- Informations de contact -->
+                    <div class="contact-info">
+                        <h2>📍 Nos informations</h2>
+                        
+                        <div class="info-card">
+                            <div class="info-item">
+                                <span class="icon">🏢</span>
+                                <div>
+                                    <strong>Adresse</strong>
+                                    <p>Mairie du Creusot<br>Place de l'Hôtel de Ville<br>71200 Le Creusot</p>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <span class="icon">📞</span>
+                                <div>
+                                    <strong>Téléphone</strong>
+                                    <p>03 85 77 76 77</p>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <span class="icon">✉️</span>
+                                <div>
+                                    <strong>Email</strong>
+                                    <p>cos@creusot.fr</p>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <span class="icon">🕒</span>
+                                <div>
+                                    <strong>Horaires d'ouverture</strong>
+                                    <p>Lundi - Vendredi : 8h30 - 17h30<br>Samedi : 9h00 - 12h00</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulaire de contact -->
+                    <div class="contact-form-section">
+                        <h2>💬 Envoyez-nous un message</h2>
+                        
+                        <form id="contactForm" class="contact-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="firstName">Prénom *</label>
+                                    <input type="text" id="firstName" name="firstName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="lastName">Nom *</label>
+                                    <input type="text" id="lastName" name="lastName" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email">Email *</label>
+                                <input type="email" id="email" name="email" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="phone">Téléphone</label>
+                                <input type="tel" id="phone" name="phone">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="subject">Sujet *</label>
+                                <select id="subject" name="subject" required>
+                                    <option value="">Choisissez un sujet</option>
+                                    <option value="inscription">Demande d'inscription</option>
+                                    <option value="prestations">Questions sur les prestations</option>
+                                    <option value="voyages">Informations voyages</option>
+                                    <option value="retraites">Services retraités</option>
+                                    <option value="evenements">Événements</option>
+                                    <option value="autre">Autre</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="message">Message *</label>
+                                <textarea id="message" name="message" rows="6" required 
+                                         placeholder="Décrivez votre demande en détail..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="newsletter" name="newsletter">
+                                    Je souhaite recevoir la newsletter du COS Creusot
+                                </label>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary btn-full" id="submitBtn">
+                                    Envoyer le message
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="alert" id="alertMessage" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>COS Creusot</h3>
+                    <p>Comité des Œuvres Sociales de la ville du Creusot</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Liens utiles</h4>
+                    <ul>
+                        <li><a href="/prestations">Prestations</a></li>
+                        <li><a href="/voyages">Voyages</a></li>
+                        <li><a href="/evenements">Événements</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p>📞 03 85 77 76 77</p>
+                    <p>✉️ cos@creusot.fr</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 COS Creusot. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/contact.js"></script>
+</body>
+</html>

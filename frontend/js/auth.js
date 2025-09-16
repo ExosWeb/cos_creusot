@@ -1,7 +1,7 @@
 // Gestion de l'authentification côté client
 class AuthManager {
     constructor() {
-        this.token = localStorage.getItem('cos_token');
+        this.token = localStorage.getItem('token');
         this.user = null;
         this.isVerifying = false; // Empêcher les vérifications multiples
         this.verificationPromise = null; // Stocker la promesse de vérification en cours
@@ -140,9 +140,15 @@ class AuthManager {
             if (response.ok) {
                 this.token = data.token;
                 this.user = data.user;
-                localStorage.setItem('cos_token', this.token);
+                localStorage.setItem('token', this.token);
                 console.log('✅ Connexion réussie, token stocké:', !!this.token);
                 this.updateUI();
+                
+                // Recharger les articles sur la page d'accueil si la fonction existe
+                if (typeof window.refreshArticlesForAuthState === 'function') {
+                    window.refreshArticlesForAuthState();
+                }
+                
                 return { success: true, message: data.message };
             } else {
                 console.log('❌ Échec de connexion:', data);
@@ -188,8 +194,13 @@ class AuthManager {
     logout() {
         this.token = null;
         this.user = null;
-        localStorage.removeItem('cos_token');
+        localStorage.removeItem('token');
         this.updateUI();
+        
+        // Recharger les articles sur la page d'accueil si la fonction existe
+        if (typeof window.refreshArticlesForAuthState === 'function') {
+            window.refreshArticlesForAuthState();
+        }
         
         // Rediriger vers la page d'accueil si on est sur une page protégée
         if (window.location.pathname === '/admin') {
@@ -223,7 +234,20 @@ class AuthManager {
         if (this.isAuthenticated()) {
             // Utilisateur connecté
             if (authButtons) authButtons.style.display = 'none';
-            if (userMenu) userMenu.style.display = 'block';
+            if (userMenu) {
+                userMenu.style.display = 'block';
+                
+                // Ajouter le lien vers "Mes Événements" si pas déjà présent
+                if (!userMenu.querySelector('.my-events-link')) {
+                    const userDropdown = userMenu.querySelector('.user-dropdown');
+                    if (userDropdown && !document.body.classList.contains('admin-page')) {
+                        const myEventsBtn = document.createElement('button');
+                        myEventsBtn.className = 'btn-my-events my-events-link';
+                        myEventsBtn.innerHTML = '<a href="/mes-evenements">Mes Événements</a>';
+                        userDropdown.insertBefore(myEventsBtn, userDropdown.firstChild);
+                    }
+                }
+            }
             if (userName) userName.textContent = `${this.user.firstname} ${this.user.lastname}`;
             
             // Afficher le bouton admin si nécessaire
@@ -386,6 +410,12 @@ window.utils = {
         
         if (show) {
             element.innerHTML = '<div class="loading">Chargement...</div>';
+        } else {
+            // Supprimer l'indicateur de chargement
+            const loadingEl = element.querySelector('.loading');
+            if (loadingEl) {
+                loadingEl.remove();
+            }
         }
     },
 
