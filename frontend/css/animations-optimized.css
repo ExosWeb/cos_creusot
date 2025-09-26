@@ -1,0 +1,111 @@
+/* Animations optimisées pour performance */
+/* Remplace toutes les animations lourdes par des fadeIn + translateY simples */
+
+/* Animation de base optimisée - fadeIn + translateY */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Variante plus subtile */
+@keyframes fadeInUpSubtle {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Animation simple pour les modals */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Loading spinner optimisé */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Animation pour boutons - très légère */
+@keyframes buttonHover {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(-2px);
+    }
+}
+
+/* Classes utilitaires pour appliquer les animations */
+.fade-in-up {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+.fade-in-up-subtle {
+    animation: fadeInUpSubtle 0.2s ease-out;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.slide-in {
+    animation: slideIn 0.4s ease-out;
+}
+
+/* Transitions optimisées pour performance */
+.transition-fast {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.transition-smooth {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Hover effects optimisés */
+.hover-lift:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease;
+}
+
+.hover-fade:hover {
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+/* Disable complex animations on low-end devices */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Performance optimizations */
+.gpu-accelerated {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+}

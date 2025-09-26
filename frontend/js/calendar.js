@@ -1,633 +1,610 @@
-// Système de calendrier pour les événements COS
-class EventCalendar {
+/**
+ * Système de Calendrier des Événements - COS Creusot
+ * Gestion des vues mois/semaine/liste avec événements multi-jours
+ */
+
+class CalendarManager {
     constructor() {
         this.currentDate = new Date();
+        this.currentView = 'month';
         this.events = [];
-        this.selectedDate = null;
-        this.viewMode = 'month'; // month, week, day
+        this.filteredEvents = [];
+        this.currentFilter = '';
+        
+        // Éléments DOM
+        this.currentPeriodEl = document.getElementById('currentPeriod');
+        this.calendarBodyEl = document.getElementById('calendarBody');
+        this.monthViewEl = document.getElementById('monthView');
+        this.weekViewEl = document.getElementById('weekView');
+        this.listViewEl = document.getElementById('listView');
+        this.loadingEl = document.getElementById('calendarLoading');
+        this.noEventsEl = document.getElementById('noEventsMessage');
+        this.categoryFilterEl = document.getElementById('categoryFilter');
+        
+        // Modal
+        this.modal = document.getElementById('eventModal');
+        this.modalTitle = document.getElementById('eventModalTitle');
+        this.modalCategory = document.getElementById('eventModalCategory');
+        this.modalDate = document.getElementById('eventModalDate');
+        this.modalTime = document.getElementById('eventModalTime');
+        this.modalLocation = document.getElementById('eventModalLocation');
+        this.modalParticipants = document.getElementById('eventModalParticipants');
+        this.modalDescription = document.getElementById('eventModalDescription');
+        this.registerBtn = document.getElementById('eventRegisterBtn');
+        this.unregisterBtn = document.getElementById('eventUnregisterBtn');
+        
         this.init();
     }
 
     init() {
-        this.createCalendarInterface();
-        this.bindEvents();
+        dlog('📅 Initializing Calendar Manager');
+        this.setupEventListeners();
         this.loadEvents();
-        this.render();
+        this.updatePeriodDisplay();
+        this.renderCurrentView();
     }
 
-    createCalendarInterface() {
-        const calendarContainer = document.createElement('div');
-        calendarContainer.className = 'event-calendar';
-        calendarContainer.innerHTML = `
-            <div class="calendar-header">
-                <div class="calendar-controls">
-                    <button class="btn-nav" id="prevMonth">‹</button>
-                    <div class="calendar-title">
-                        <h2 id="calendarTitle">${this.formatMonthYear(this.currentDate)}</h2>
-                    </div>
-                    <button class="btn-nav" id="nextMonth">›</button>
-                </div>
-                
-                <div class="view-controls">
-                    <button class="btn-view ${this.viewMode === 'month' ? 'active' : ''}" data-view="month">Mois</button>
-                    <button class="btn-view ${this.viewMode === 'week' ? 'active' : ''}" data-view="week">Semaine</button>
-                    <button class="btn-view ${this.viewMode === 'day' ? 'active' : ''}" data-view="day">Jour</button>
-                </div>
-                
-                <div class="calendar-actions">
-                    <button class="btn-today" id="todayBtn">Aujourd'hui</button>
-                    <button class="btn-add-event" id="addEventBtn">+ Événement</button>
-                </div>
-            </div>
-            
-            <div class="calendar-body">
-                <div class="calendar-grid" id="calendarGrid">
-                    <!-- Le calendrier sera généré ici -->
-                </div>
-            </div>
-            
-            <div class="calendar-sidebar">
-                <div class="upcoming-events">
-                    <h3>Événements à venir</h3>
-                    <div class="upcoming-list" id="upcomingEvents">
-                        <!-- Liste des événements à venir -->
-                    </div>
-                </div>
-                
-                <div class="calendar-legend">
-                    <h4>Légende</h4>
-                    <div class="legend-item">
-                        <span class="legend-color event-general"></span>
-                        <span>Général</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color event-voyage"></span>
-                        <span>Voyage</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color event-retraite"></span>
-                        <span>Retraite</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color event-activite"></span>
-                        <span>Activité</span>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // Insérer le calendrier dans la page
-        const targetContainer = document.querySelector('.calendar-container, .events-container, main');
-        if (targetContainer) {
-            targetContainer.appendChild(calendarContainer);
-        }
-
-        this.calendarGrid = document.getElementById('calendarGrid');
-        this.calendarTitle = document.getElementById('calendarTitle');
-    }
-
-    bindEvents() {
-        // Navigation mois précédent/suivant
-        document.getElementById('prevMonth').addEventListener('click', () => {
-            this.currentDate.setMonth(this.currentDate.getMonth() - 1);
-            this.render();
+    setupEventListeners() {
+        // Navigation
+        document.getElementById('prevBtn').addEventListener('click', () => this.navigatePrevious());
+        document.getElementById('nextBtn').addEventListener('click', () => this.navigateNext());
+        document.getElementById('todayBtn').addEventListener('click', () => this.goToToday());
+        
+        // Vues
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.switchView(e.target.dataset.view));
         });
-
-        document.getElementById('nextMonth').addEventListener('click', () => {
-            this.currentDate.setMonth(this.currentDate.getMonth() + 1);
-            this.render();
+        
+        // Filtres
+        this.categoryFilterEl.addEventListener('change', (e) => this.filterEvents(e.target.value));
+        
+        // Modal
+        document.querySelector('.event-modal-close').addEventListener('click', () => this.closeModal());
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) this.closeModal();
         });
-
-        // Bouton aujourd'hui
-        document.getElementById('todayBtn').addEventListener('click', () => {
-            this.currentDate = new Date();
-            this.render();
+        
+        // Échap pour fermer le modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.classList.contains('show')) {
+                this.closeModal();
+            }
         });
-
-        // Changement de vue
-        document.querySelectorAll('.btn-view').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                this.viewMode = e.target.dataset.view;
-                document.querySelectorAll('.btn-view').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                this.render();
-            });
-        });
-
-        // Bouton ajouter événement
-        document.getElementById('addEventBtn').addEventListener('click', () => {
-            this.showEventModal();
-        });
+        
+        // Boutons d'inscription
+        this.registerBtn.addEventListener('click', () => this.registerToEvent());
+        this.unregisterBtn.addEventListener('click', () => this.unregisterFromEvent());
     }
 
     async loadEvents() {
         try {
-            const response = await fetch('/api/events');
-            if (response.ok) {
-                const data = await response.json();
-                this.events = Array.isArray(data) ? data : (data.events || []);
-            } else {
-                console.warn('Pas d\'événements trouvés');
-                this.events = [];
+            this.showLoading();
+            dlog('🔄 Loading events from API');
+            
+            // Calculer la plage de dates (mois courant + précédent + suivant)
+            const startDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() - 1, 1);
+            const endDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 2, 0);
+            
+            const params = new URLSearchParams({
+                from_date: startDate.toISOString().split('T')[0],
+                to_date: endDate.toISOString().split('T')[0],
+                limit: 100
+            });
+            
+            const response = await fetch(`/api/events?${params}`, {
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
+            
+            const data = await response.json();
+            this.events = data.events || [];
+            this.filteredEvents = [...this.events];
+            
+            dlog('✅ Events loaded:', this.events.length);
+            this.hideLoading();
+            this.renderCurrentView();
+            
         } catch (error) {
-            console.error('Erreur lors du chargement des événements:', error);
-            this.events = [];
+            derror('❌ Failed to load events:', error);
+            this.hideLoading();
+            this.showNoEvents();
         }
     }
 
-    render() {
-        this.calendarTitle.textContent = this.formatMonthYear(this.currentDate);
+    filterEvents(category) {
+        this.currentFilter = category;
         
-        switch (this.viewMode) {
+        if (category) {
+            this.filteredEvents = this.events.filter(event => event.category === category);
+        } else {
+            this.filteredEvents = [...this.events];
+        }
+        
+        dlog('🔍 Filtered events:', this.filteredEvents.length, 'for category:', category || 'all');
+        this.renderCurrentView();
+    }
+
+    switchView(view) {
+        if (view === this.currentView) return;
+        
+        this.currentView = view;
+        
+        // Mettre à jour les boutons
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === view);
+        });
+        
+        // Mettre à jour les vues
+        document.querySelectorAll('.calendar-view').forEach(viewEl => {
+            viewEl.classList.remove('active');
+        });
+        
+        document.getElementById(`${view}View`).classList.add('active');
+        
+        this.updatePeriodDisplay();
+        this.renderCurrentView();
+        
+        dlog('🔄 Switched to view:', view);
+    }
+
+    navigatePrevious() {
+        switch (this.currentView) {
+            case 'month':
+                this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+                break;
+            case 'week':
+                this.currentDate.setDate(this.currentDate.getDate() - 7);
+                break;
+            case 'list':
+                this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+                break;
+        }
+        
+        this.updatePeriodDisplay();
+        this.loadEvents(); // Recharger pour la nouvelle période
+    }
+
+    navigateNext() {
+        switch (this.currentView) {
+            case 'month':
+                this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+                break;
+            case 'week':
+                this.currentDate.setDate(this.currentDate.getDate() + 7);
+                break;
+            case 'list':
+                this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+                break;
+        }
+        
+        this.updatePeriodDisplay();
+        this.loadEvents(); // Recharger pour la nouvelle période
+    }
+
+    goToToday() {
+        this.currentDate = new Date();
+        this.updatePeriodDisplay();
+        this.loadEvents();
+    }
+
+    updatePeriodDisplay() {
+        let periodText = '';
+        
+        switch (this.currentView) {
+            case 'month':
+                periodText = this.currentDate.toLocaleDateString('fr-FR', { 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+                break;
+            case 'week':
+                const startOfWeek = this.getStartOfWeek(this.currentDate);
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(endOfWeek.getDate() + 6);
+                
+                periodText = `${startOfWeek.getDate()} - ${endOfWeek.getDate()} ${endOfWeek.toLocaleDateString('fr-FR', { 
+                    month: 'long', 
+                    year: 'numeric' 
+                })}`;
+                break;
+            case 'list':
+                periodText = this.currentDate.toLocaleDateString('fr-FR', { 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+                break;
+        }
+        
+        this.currentPeriodEl.textContent = periodText.charAt(0).toUpperCase() + periodText.slice(1);
+    }
+
+    renderCurrentView() {
+        switch (this.currentView) {
             case 'month':
                 this.renderMonthView();
                 break;
             case 'week':
                 this.renderWeekView();
                 break;
-            case 'day':
-                this.renderDayView();
+            case 'list':
+                this.renderListView();
                 break;
         }
-        
-        this.renderUpcomingEvents();
     }
 
     renderMonthView() {
-        const firstDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
-        const lastDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 0);
-        const startDate = new Date(firstDay);
-        startDate.setDate(startDate.getDate() - firstDay.getDay());
-
-        let html = '<div class="calendar-month">';
+        const year = this.currentDate.getFullYear();
+        const month = this.currentDate.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
         
-        // En-têtes des jours de la semaine
-        html += '<div class="calendar-weekdays">';
-        const weekdays = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-        weekdays.forEach(day => {
-            html += `<div class="weekday">${day}</div>`;
-        });
-        html += '</div>';
-
-        // Grille du calendrier
-        html += '<div class="calendar-days">';
-        const currentDate = new Date(startDate);
+        // Commencer le lundi de la semaine de la première date
+        const startDate = this.getStartOfWeek(firstDay);
         
-        for (let week = 0; week < 6; week++) {
-            for (let day = 0; day < 7; day++) {
-                const isCurrentMonth = currentDate.getMonth() === this.currentDate.getMonth();
-                const isToday = this.isToday(currentDate);
-                const dayEvents = this.getEventsForDate(currentDate);
-                
-                html += `
-                    <div class="calendar-day ${isCurrentMonth ? 'current-month' : 'other-month'} ${isToday ? 'today' : ''}" 
-                         data-date="${currentDate.toISOString().split('T')[0]}">
-                        <div class="day-number">${currentDate.getDate()}</div>
-                        <div class="day-events">
-                            ${dayEvents.map(event => `
-                                <div class="event-item event-${event.category || 'general'}" 
-                                     onclick="eventCalendar.showEventDetails(${event.id})">
-                                    <span class="event-time">${this.formatTime(event.start_time)}</span>
-                                    <span class="event-title">${event.title}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-                
-                currentDate.setDate(currentDate.getDate() + 1);
-            }
-            
-            // Arrêter si on a dépassé le mois suivant
-            if (currentDate.getMonth() !== this.currentDate.getMonth() && currentDate.getMonth() !== (this.currentDate.getMonth() + 1) % 12) {
-                break;
-            }
+        // Finir le dimanche de la semaine de la dernière date
+        const endDate = new Date(lastDay);
+        while (endDate.getDay() !== 0) {
+            endDate.setDate(endDate.getDate() + 1);
         }
         
-        html += '</div></div>';
-        this.calendarGrid.innerHTML = html;
-
-        // Ajouter les événements de clic sur les jours
-        document.querySelectorAll('.calendar-day').forEach(dayEl => {
-            dayEl.addEventListener('click', (e) => {
-                if (e.target.classList.contains('calendar-day')) {
-                    this.selectDate(dayEl.dataset.date);
-                }
+        let html = '';
+        const currentDate = new Date(startDate);
+        
+        while (currentDate <= endDate) {
+            const dayEvents = this.getEventsForDate(currentDate);
+            const isToday = this.isToday(currentDate);
+            const isCurrentMonth = currentDate.getMonth() === month;
+            const hasEvents = dayEvents.length > 0;
+            
+            const dayClass = [
+                'calendar-day',
+                !isCurrentMonth && 'other-month',
+                isToday && 'today',
+                hasEvents && 'has-events'
+            ].filter(Boolean).join(' ');
+            
+            html += `
+                <div class="${dayClass}" data-date="${currentDate.toISOString().split('T')[0]}">
+                    <div class="day-number">${currentDate.getDate()}</div>
+                    <div class="day-events">
+                        ${this.renderDayEvents(dayEvents, currentDate)}
+                    </div>
+                </div>
+            `;
+            
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        this.calendarBodyEl.innerHTML = html;
+        
+        // Ajouter les event listeners
+        this.calendarBodyEl.querySelectorAll('.calendar-event').forEach(eventEl => {
+            eventEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const eventId = eventEl.dataset.eventId;
+                this.openEventModal(eventId);
             });
         });
+    }
+
+    renderDayEvents(events, date) {
+        if (events.length === 0) return '';
+        
+        return events.slice(0, 3).map(event => {
+            const startDate = new Date(event.start_date);
+            const endDate = new Date(event.end_date);
+            const currentDateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            
+            // Déterminer la position de l'événement multi-jours
+            let eventClass = 'calendar-event ' + (event.category || 'general');
+            
+            if (startDate.getTime() !== endDate.getTime()) {
+                eventClass += ' multi-day';
+                
+                if (this.isSameDate(startDate, currentDateOnly)) {
+                    eventClass += ' event-start';
+                } else if (this.isSameDate(endDate, currentDateOnly)) {
+                    eventClass += ' event-end';
+                } else {
+                    eventClass += ' event-middle';
+                }
+            }
+            
+            return `
+                <div class="${eventClass}" data-event-id="${event.id}" title="${event.title}">
+                    ${event.title}
+                </div>
+            `;
+        }).join('') + (events.length > 3 ? `<div class="more-events">+${events.length - 3} autres</div>` : '');
     }
 
     renderWeekView() {
         const startOfWeek = this.getStartOfWeek(this.currentDate);
-        const dates = [];
+        const weekDays = [];
         
+        // Générer les 7 jours de la semaine
         for (let i = 0; i < 7; i++) {
             const date = new Date(startOfWeek);
             date.setDate(date.getDate() + i);
-            dates.push(date);
+            weekDays.push(date);
         }
-
-        let html = '<div class="calendar-week">';
         
-        // En-tête avec les dates
-        html += '<div class="week-header">';
-        html += '<div class="time-column"></div>';
-        dates.forEach(date => {
+        // Générer les créneaux horaires
+        let timeSlotsHtml = '';
+        for (let hour = 0; hour < 24; hour++) {
+            timeSlotsHtml += `
+                <div class="time-slot">
+                    ${hour.toString().padStart(2, '0')}:00
+                </div>
+            `;
+        }
+        document.getElementById('timeSlots').innerHTML = timeSlotsHtml;
+        
+        // Générer les jours de la semaine
+        let weekDaysHtml = '';
+        weekDays.forEach(date => {
+            const dayEvents = this.getEventsForDate(date);
             const isToday = this.isToday(date);
-            html += `
-                <div class="week-day ${isToday ? 'today' : ''}">
-                    <div class="day-name">${this.getDayName(date)}</div>
-                    <div class="day-date">${date.getDate()}</div>
+            
+            weekDaysHtml += `
+                <div class="week-day">
+                    <div class="week-day-header ${isToday ? 'today' : ''}">
+                        <div>${date.toLocaleDateString('fr-FR', { weekday: 'short' })}</div>
+                        <div>${date.getDate()}</div>
+                    </div>
+                    <div class="week-day-content">
+                        ${this.renderWeekEvents(dayEvents)}
+                    </div>
                 </div>
             `;
         });
-        html += '</div>';
+        
+        document.getElementById('weekDays').innerHTML = weekDaysHtml;
+        
+        // Ajouter les event listeners
+        document.querySelectorAll('.week-event').forEach(eventEl => {
+            eventEl.addEventListener('click', () => {
+                const eventId = eventEl.dataset.eventId;
+                this.openEventModal(eventId);
+            });
+        });
+    }
 
-        // Grille horaire
-        html += '<div class="week-grid">';
-        for (let hour = 0; hour < 24; hour++) {
-            html += `
-                <div class="hour-row">
-                    <div class="time-label">${hour.toString().padStart(2, '0')}:00</div>
-                    ${dates.map(date => {
-                        const hourEvents = this.getEventsForDateHour(date, hour);
-                        return `
-                            <div class="hour-cell" data-date="${date.toISOString().split('T')[0]}" data-hour="${hour}">
-                                ${hourEvents.map(event => `
-                                    <div class="event-block event-${event.category || 'general'}" 
-                                         onclick="eventCalendar.showEventDetails(${event.id})">
-                                        ${event.title}
-                                    </div>
-                                `).join('')}
-                            </div>
-                        `;
-                    }).join('')}
+    renderWeekEvents(events) {
+        return events.map(event => {
+            const startTime = event.start_time || '00:00';
+            const endTime = event.end_time || '23:59';
+            
+            const [startHour, startMinute] = startTime.split(':').map(Number);
+            const [endHour, endMinute] = endTime.split(':').map(Number);
+            
+            const startPosition = (startHour * 60 + startMinute);
+            const duration = (endHour * 60 + endMinute) - startPosition;
+            const height = Math.max(30, duration); // Minimum 30px
+            
+            return `
+                <div class="week-event ${event.category || 'general'}" 
+                     data-event-id="${event.id}"
+                     style="top: ${startPosition}px; height: ${height}px;"
+                     title="${event.title}">
+                    <strong>${event.title}</strong><br>
+                    <small>${startTime} - ${endTime}</small>
                 </div>
             `;
-        }
-        html += '</div></div>';
-        
-        this.calendarGrid.innerHTML = html;
+        }).join('');
     }
 
-    renderDayView() {
-        let html = '<div class="calendar-day-view">';
+    renderListView() {
+        const year = this.currentDate.getFullYear();
+        const month = this.currentDate.getMonth();
         
-        html += `
-            <div class="day-header">
-                <h3>${this.formatFullDate(this.currentDate)}</h3>
-            </div>
-        `;
-
-        const dayEvents = this.getEventsForDate(this.currentDate);
+        // Événements du mois courant
+        const monthEvents = this.filteredEvents.filter(event => {
+            const eventDate = new Date(event.start_date);
+            return eventDate.getFullYear() === year && eventDate.getMonth() === month;
+        });
         
-        if (dayEvents.length === 0) {
-            html += '<div class="no-events">Aucun événement prévu pour cette journée</div>';
-        } else {
-            html += '<div class="day-events-list">';
-            dayEvents.forEach(event => {
-                html += `
-                    <div class="event-card event-${event.category || 'general'}" 
-                         onclick="eventCalendar.showEventDetails(${event.id})">
-                        <div class="event-time">
-                            ${this.formatTime(event.start_time)} - ${this.formatTime(event.end_time)}
-                        </div>
-                        <div class="event-info">
-                            <h4>${event.title}</h4>
-                            <p>${event.description || ''}</p>
-                            <div class="event-meta">
-                                <span class="event-location">${event.location || ''}</span>
-                                <span class="event-participants">${event.max_participants ? `${event.participants_count || 0}/${event.max_participants}` : ''}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            html += '</div>';
-        }
+        // Trier par date
+        monthEvents.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
         
-        html += '</div>';
-        this.calendarGrid.innerHTML = html;
-    }
-
-    renderUpcomingEvents() {
-        const upcoming = this.getUpcomingEvents(5);
-        const upcomingContainer = document.getElementById('upcomingEvents');
-        
-        if (upcoming.length === 0) {
-            upcomingContainer.innerHTML = '<p class="no-upcoming">Aucun événement à venir</p>';
+        if (monthEvents.length === 0) {
+            this.showNoEvents();
             return;
         }
-
-        upcomingContainer.innerHTML = upcoming.map(event => `
-            <div class="upcoming-item" onclick="eventCalendar.showEventDetails(${event.id})">
-                <div class="upcoming-date">${this.formatShortDate(new Date(event.start_date))}</div>
-                <div class="upcoming-info">
-                    <div class="upcoming-title">${event.title}</div>
-                    <div class="upcoming-time">${this.formatTime(event.start_time)}</div>
+        
+        const listHtml = monthEvents.map(event => {
+            const startDate = new Date(event.start_date);
+            const endDate = new Date(event.end_date);
+            const isMultiDay = !this.isSameDate(startDate, endDate);
+            
+            return `
+                <div class="event-list-item" data-event-id="${event.id}">
+                    <div class="event-date-column">
+                        <div class="event-date-day">${startDate.getDate()}</div>
+                        <div class="event-date-month">${startDate.toLocaleDateString('fr-FR', { month: 'short' })}</div>
+                    </div>
+                    <div class="event-content-column">
+                        <h3 class="event-list-title">${event.title}</h3>
+                        <div class="event-list-meta">
+                            <span class="event-list-time">
+                                <i class="fas fa-clock"></i>
+                                ${isMultiDay 
+                                    ? `Du ${startDate.toLocaleDateString('fr-FR')} au ${endDate.toLocaleDateString('fr-FR')}`
+                                    : `${event.start_time || '00:00'} - ${event.end_time || '23:59'}`
+                                }
+                            </span>
+                            ${event.location ? `
+                                <span class="event-list-location">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    ${event.location}
+                                </span>
+                            ` : ''}
+                            <span class="event-category ${event.category || 'general'}">
+                                ${this.getCategoryDisplayName(event.category)}
+                            </span>
+                        </div>
+                        ${event.description ? `
+                            <p class="event-list-description">
+                                ${event.description.length > 150 
+                                    ? event.description.substring(0, 150) + '...'
+                                    : event.description
+                                }
+                            </p>
+                        ` : ''}
+                    </div>
                 </div>
-                <div class="upcoming-category event-${event.category || 'general'}"></div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+        
+        document.getElementById('eventsList').innerHTML = listHtml;
+        
+        // Ajouter les event listeners
+        document.querySelectorAll('.event-list-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const eventId = item.dataset.eventId;
+                this.openEventModal(eventId);
+            });
+        });
+        
+        this.hideLoading();
+        this.hideNoEvents();
     }
 
     getEventsForDate(date) {
-        const dateStr = date.toISOString().split('T')[0];
-        return this.events.filter(event => {
-            const eventDate = new Date(event.start_date).toISOString().split('T')[0];
-            return eventDate === dateStr;
-        });
-    }
-
-    getEventsForDateHour(date, hour) {
-        const events = this.getEventsForDate(date);
-        return events.filter(event => {
-            const startHour = parseInt(event.start_time.split(':')[0]);
-            return startHour === hour;
-        });
-    }
-
-    getUpcomingEvents(limit = 5) {
-        const now = new Date();
-        return this.events
-            .filter(event => new Date(event.start_date) >= now)
-            .sort((a, b) => new Date(a.start_date) - new Date(b.start_date))
-            .slice(0, limit);
-    }
-
-    selectDate(dateStr) {
-        this.selectedDate = new Date(dateStr);
-        // Mettre en surbrillance la date sélectionnée
-        document.querySelectorAll('.calendar-day').forEach(day => day.classList.remove('selected'));
-        document.querySelector(`[data-date="${dateStr}"]`).classList.add('selected');
-    }
-
-    showEventDetails(eventId) {
-        const event = this.events.find(e => e.id === eventId);
-        if (!event) return;
-
-        // Créer une modale pour afficher les détails de l'événement
-        this.showEventModal(event);
-    }
-
-    showEventModal(event = null) {
-        const isEdit = !!event;
-        const modalHTML = `
-            <div class="modal-overlay" id="eventModal">
-                <div class="modal-content event-modal">
-                    <div class="modal-header">
-                        <h3>${isEdit ? 'Détails de l\'événement' : 'Nouvel événement'}</h3>
-                        <button class="modal-close" onclick="eventCalendar.closeModal()">&times;</button>
-                    </div>
-                    
-                    <div class="modal-body">
-                        ${isEdit ? this.renderEventDetails(event) : this.renderEventForm()}
-                    </div>
-                    
-                    <div class="modal-footer">
-                        ${isEdit ? 
-                            `<button class="btn-secondary" onclick="eventCalendar.editEvent(${event.id})">Modifier</button>
-                             <button class="btn-danger" onclick="eventCalendar.deleteEvent(${event.id})">Supprimer</button>` :
-                            `<button class="btn-primary" onclick="eventCalendar.saveEvent()">Créer</button>`
-                        }
-                        <button class="btn-secondary" onclick="eventCalendar.closeModal()">Fermer</button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-    }
-
-    renderEventDetails(event) {
-        // Déterminer si l'utilisateur est connecté et peut s'inscrire
-        const userToken = localStorage.getItem('authToken');
-        const canRegister = userToken && !event.is_user_registered;
-        const canUnregister = userToken && event.is_user_registered;
-        const isEventFull = event.max_participants && event.participants_count >= event.max_participants;
+        const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         
-        return `
-            <div class="event-details">
-                <div class="detail-item">
-                    <strong>Titre:</strong> ${event.title}
-                </div>
-                <div class="detail-item">
-                    <strong>Date:</strong> ${this.formatFullDate(new Date(event.start_date))}
-                </div>
-                <div class="detail-item">
-                    <strong>Heure:</strong> ${this.formatTime(event.start_time)} - ${this.formatTime(event.end_time)}
-                </div>
-                <div class="detail-item">
-                    <strong>Lieu:</strong> ${event.location || 'Non spécifié'}
-                </div>
-                <div class="detail-item">
-                    <strong>Description:</strong> 
-                    <div class="description-content">${event.description || 'Aucune description'}</div>
-                </div>
-                <div class="detail-item">
-                    <strong>Catégorie:</strong> ${this.getCategoryName(event.category)}
-                </div>
-                <div class="detail-item">
-                    <strong>Places:</strong> 
-                    ${event.max_participants ? 
-                        `<span class="${isEventFull ? 'text-warning' : ''}">${event.participants_count || 0} / ${event.max_participants} participants</span>` : 
-                        'Illimité'
-                    }
-                </div>
-                
-                <!-- Section d'inscription -->
-                <div class="event-registration">
-                    ${!userToken ? `
-                        <div class="registration-notice">
-                            <p>🔒 Vous devez être connecté pour vous inscrire à cet événement</p>
-                            <div class="auth-actions">
-                                <a href="/login" class="btn btn-primary">Se connecter</a>
-                                <a href="/register" class="btn btn-outline">S'inscrire</a>
-                            </div>
-                        </div>
-                    ` : event.is_member_only ? `
-                        <div class="registration-actions">
-                            ${canRegister && !isEventFull ? `
-                                <button class="btn btn-success" onclick="window.eventRegistrationManager?.registerToEvent(${event.id})">
-                                    ✓ S'inscrire à l'événement
-                                </button>
-                            ` : ''}
-                            ${canUnregister ? `
-                                <button class="btn btn-warning" onclick="window.eventRegistrationManager?.unregisterFromEvent(${event.id})">
-                                    ✗ Se désinscrire
-                                </button>
-                            ` : ''}
-                            ${isEventFull && !canUnregister ? `
-                                <div class="registration-full">
-                                    <span class="text-warning">⚠️ Événement complet</span>
-                                </div>
-                            ` : ''}
-                            ${event.is_user_registered ? `
-                                <div class="registration-status">
-                                    <span class="text-success">✓ Vous êtes inscrit</span>
-                                </div>
-                            ` : ''}
-                        </div>
-                    ` : `
-                        <div class="registration-notice">
-                            <p>ℹ️ Événement ouvert à tous - aucune inscription requise</p>
-                        </div>
-                    `}
-                </div>
-            </div>
-        `;
+        return this.filteredEvents.filter(event => {
+            const startDate = new Date(event.start_date);
+            const endDate = new Date(event.end_date);
+            
+            const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+            const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+            
+            return dateOnly >= startDateOnly && dateOnly <= endDateOnly;
+        });
     }
 
-    renderEventForm() {
-        return `
-            <form class="event-form" id="eventForm">
-                <div class="form-group">
-                    <label>Titre de l'événement *</label>
-                    <input type="text" name="title" required>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Date *</label>
-                        <input type="date" name="start_date" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Heure début *</label>
-                        <input type="time" name="start_time" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Heure fin</label>
-                        <input type="time" name="end_time">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Lieu</label>
-                    <input type="text" name="location">
-                </div>
-                
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea name="description" rows="4"></textarea>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Catégorie</label>
-                        <select name="category">
-                            <option value="general">Général</option>
-                            <option value="voyage">Voyage</option>
-                            <option value="retraite">Retraite</option>
-                            <option value="activite">Activité</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Nombre max de participants</label>
-                        <input type="number" name="max_participants" min="1">
-                    </div>
-                </div>
-            </form>
-        `;
+    openEventModal(eventId) {
+        const event = this.events.find(e => e.id === parseInt(eventId));
+        if (!event) return;
+        
+        dlog('📖 Opening event modal:', event.title);
+        
+        // Remplir le modal
+        this.modalTitle.textContent = event.title;
+        this.modalCategory.textContent = this.getCategoryDisplayName(event.category);
+        this.modalCategory.className = `event-category ${event.category || 'general'}`;
+        
+        // Date
+        const startDate = new Date(event.start_date);
+        const endDate = new Date(event.end_date);
+        const isMultiDay = !this.isSameDate(startDate, endDate);
+        
+        if (isMultiDay) {
+            this.modalDate.textContent = `Du ${startDate.toLocaleDateString('fr-FR')} au ${endDate.toLocaleDateString('fr-FR')}`;
+        } else {
+            this.modalDate.textContent = startDate.toLocaleDateString('fr-FR');
+        }
+        
+        // Heure
+        if (event.start_time && event.end_time) {
+            this.modalTime.textContent = `${event.start_time} - ${event.end_time}`;
+        } else {
+            this.modalTime.textContent = 'Toute la journée';
+        }
+        
+        // Lieu
+        this.modalLocation.textContent = event.location || 'Non spécifié';
+        
+        // Participants
+        const participantsText = event.max_participants 
+            ? `${event.participants_count || 0} / ${event.max_participants}`
+            : `${event.participants_count || 0} inscrits`;
+        this.modalParticipants.textContent = participantsText;
+        
+        // Description
+        this.modalDescription.textContent = event.description || 'Aucune description disponible.';
+        
+        // Boutons d'inscription (TODO: implémenter la logique d'inscription)
+        this.registerBtn.style.display = 'inline-flex';
+        this.unregisterBtn.style.display = 'none';
+        
+        // Afficher le modal
+        this.modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
     }
 
     closeModal() {
-        const modal = document.getElementById('eventModal');
-        if (modal) {
-            modal.remove();
-        }
+        this.modal.classList.remove('show');
+        document.body.style.overflow = '';
     }
 
-    // Méthode pour recharger un événement après inscription/désinscription
-    async refreshEvent(eventId) {
-        try {
-            const response = await fetch(`/api/events/${eventId}`);
-            const data = await response.json();
-            
-            if (data.success) {
-                // Mettre à jour l'événement dans la liste locale
-                const eventIndex = this.events.findIndex(e => e.id === eventId);
-                if (eventIndex !== -1) {
-                    this.events[eventIndex] = data.event;
-                }
-                
-                // Rerendre le calendrier
-                this.render();
-                
-                // Si la modale est ouverte, la mettre à jour
-                const modal = document.getElementById('eventModal');
-                if (modal) {
-                    this.closeModal();
-                    this.showEventDetails(eventId);
-                }
-            }
-        } catch (error) {
-            console.error('Erreur lors du rafraîchissement de l\'événement:', error);
-        }
+    async registerToEvent() {
+        // TODO: Implémenter l'inscription à un événement
+        dlog('📝 Register to event (TODO)');
     }
 
-    // Fonctions utilitaires pour les dates
-    formatMonthYear(date) {
-        return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    async unregisterFromEvent() {
+        // TODO: Implémenter la désinscription d'un événement
+        dlog('❌ Unregister from event (TODO)');
     }
 
-    formatFullDate(date) {
-        return date.toLocaleDateString('fr-FR', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        });
-    }
-
-    formatShortDate(date) {
-        return date.toLocaleDateString('fr-FR', { 
-            month: 'short', 
-            day: 'numeric' 
-        });
-    }
-
-    formatTime(timeStr) {
-        if (!timeStr) return '';
-        return timeStr.substring(0, 5); // HH:MM
+    // Utilitaires
+    getStartOfWeek(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Lundi = début de semaine
+        return new Date(d.setDate(diff));
     }
 
     isToday(date) {
         const today = new Date();
-        return date.toDateString() === today.toDateString();
+        return this.isSameDate(date, today);
     }
 
-    getStartOfWeek(date) {
-        const startOfWeek = new Date(date);
-        const day = startOfWeek.getDay();
-        const diff = startOfWeek.getDate() - day;
-        startOfWeek.setDate(diff);
-        return startOfWeek;
+    isSameDate(date1, date2) {
+        return date1.getFullYear() === date2.getFullYear() &&
+               date1.getMonth() === date2.getMonth() &&
+               date1.getDate() === date2.getDate();
     }
 
-    getDayName(date) {
-        return date.toLocaleDateString('fr-FR', { weekday: 'short' });
-    }
-
-    getCategoryName(category) {
-        const categories = {
-            'general': 'Général',
-            'voyage': 'Voyage',
-            'retraite': 'Retraite',
-            'activite': 'Activité'
+    getCategoryDisplayName(category) {
+        const names = {
+            voyages: 'Voyages',
+            retraites: 'Retraités',
+            evenements: 'Événements',
+            general: 'Général'
         };
-        return categories[category] || category;
+        return names[category] || 'Autre';
+    }
+
+    showLoading() {
+        this.loadingEl.style.display = 'block';
+        this.hideNoEvents();
+    }
+
+    hideLoading() {
+        this.loadingEl.style.display = 'none';
+    }
+
+    showNoEvents() {
+        this.noEventsEl.style.display = 'block';
+        this.hideLoading();
+    }
+
+    hideNoEvents() {
+        this.noEventsEl.style.display = 'none';
     }
 }
 
-// Initialisation automatique
+// Initialiser le calendrier au chargement de la page
 document.addEventListener('DOMContentLoaded', () => {
-    // Vérifier si on est sur une page qui a besoin du calendrier
-    const needsCalendar = document.querySelector('.calendar-container, .events-container') || 
-                         document.body.classList.contains('events-page') ||
-                         window.location.pathname.includes('evenements');
-    
-    if (needsCalendar) {
-        window.eventCalendar = new EventCalendar();
-    }
+    dlog('🚀 Initializing Calendar System');
+    new CalendarManager();
 });

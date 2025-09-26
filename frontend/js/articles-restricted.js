@@ -202,7 +202,7 @@ class RestrictedArticlesManager {
             : '<i class="fas fa-newspaper"></i>';
 
         return `
-            <div class="article-card" onclick="this.openArticle(${article.id})" data-article-id="${article.id}">
+            <div class="article-card" onclick="openArticle(${article.id})" data-article-id="${article.id}">
                 <div class="article-image">
                     ${imageHtml}
                 </div>
@@ -281,13 +281,21 @@ class RestrictedArticlesManager {
     }
 
     openArticle(articleId) {
-        window.location.href = `/article/${articleId}`;
+        if (window.ArticleModal) {
+            window.ArticleModal.open(articleId);
+        } else {
+            window.location.href = `/article/${articleId}`;
+        }
     }
 }
 
 // Ajout de la méthode openArticle globalement pour les cartes
 window.openArticle = function(articleId) {
-    window.location.href = `/article/${articleId}`;
+    if (window.ArticleModal) {
+        window.ArticleModal.open(articleId);
+    } else {
+        window.location.href = `/article/${articleId}`;
+    }
 };
 
 // Initialiser le gestionnaire d'articles

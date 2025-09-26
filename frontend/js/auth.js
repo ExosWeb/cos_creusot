@@ -1,3 +1,11 @@
+// Helpers de log (sécurisés en toutes pages)
+window.dlog = window.dlog || function(...args) {
+    try { console.debug(...args); } catch (_) {}
+};
+window.derror = window.derror || function(...args) {
+    try { console.error(...args); } catch (_) {}
+};
+
 // Gestion de l'authentification côté client
 class AuthManager {
     constructor() {
@@ -16,7 +24,7 @@ class AuthManager {
         this.updateUI();
         this.bindEvents();
         this.isReady = true;
-        console.log('🔧 AuthManager initialisé', { authenticated: this.isAuthenticated(), admin: this.isAdmin() });
+        dlog('🔧 AuthManager initialisé', { authenticated: this.isAuthenticated(), admin: this.isAdmin() });
     }
 
     // Méthode pour attendre que l'AuthManager soit prêt
@@ -52,7 +60,22 @@ class AuthManager {
 
     async _performTokenVerification() {
         try {
-            console.log('🔍 Vérification du token...');
+            // Vérifier que le token a un format valide avant de l'envoyer
+            if (typeof this.token !== 'string' || this.token.trim() === '') {
+                derror('❌ Token invalide dans localStorage:', this.token);
+                this.clearCorruptedAuth();
+                return false;
+            }
+
+            // Vérifier que le token ressemble à un JWT (3 parties séparées par des points)
+            const tokenParts = this.token.split('.');
+            if (tokenParts.length !== 3) {
+                derror('❌ Token malformé (pas 3 parties):', this.token.substring(0, 20) + '...');
+                this.logout();
+                return false;
+            }
+
+            dlog('🔍 Vérification du token...');
             
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 secondes
@@ -71,8 +94,9 @@ class AuthManager {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('✅ Token valide, utilisateur:', data.user?.email);
+                dlog('✅ Token valide, utilisateur:', data.user?.email);
                 this.user = data.user;
+                // Ne pas modifier isAuthenticated ici car il dépend de token ET user
                 return true;
             } else {
                 const errorData = await response.json().catch(() => ({}));
@@ -138,18 +162,34 @@ class AuthManager {
             console.log('📊 Données reçues:', data);
 
             if (response.ok) {
-                this.token = data.token;
-                this.user = data.user;
+                // Accepter token ou accessToken (compat backend)
+                const receivedToken = data.token || data.accessToken;
+                if (!receivedToken || typeof receivedToken !== 'string') {
+                    derror('❌ Token manquant ou invalide reçu du serveur:', receivedToken);
+                    return { success: false, message: 'Token invalide reçu du serveur' };
+                }
+
+                // Valider format JWT
+                const parts = receivedToken.split('.');
+                if (parts.length !== 3) {
+                    derror('❌ Token malformé (parties):', parts.length);
+                    return { success: false, message: 'Token malformé reçu du serveur' };
+                }
+
+                this.token = receivedToken.trim();
+                this.user = data.user || null;
                 localStorage.setItem('token', this.token);
-                console.log('✅ Connexion réussie, token stocké:', !!this.token);
+
+                dlog('✅ Connexion réussie - Token:', !!this.token, 'User:', this.user?.email, 'Auth:', this.isAuthenticated());
+
                 this.updateUI();
-                
+
                 // Recharger les articles sur la page d'accueil si la fonction existe
                 if (typeof window.refreshArticlesForAuthState === 'function') {
                     window.refreshArticlesForAuthState();
                 }
-                
-                return { success: true, message: data.message };
+
+                return { success: true, message: data.message, user: this.user };
             } else {
                 console.log('❌ Échec de connexion:', data);
                 return { 
@@ -195,6 +235,11 @@ class AuthManager {
         this.token = null;
         this.user = null;
         localStorage.removeItem('token');
+        
+        // Nettoyer aussi d'autres éventuelles données corrompues
+        localStorage.removeItem('user');
+        localStorage.removeItem('authState');
+        
         this.updateUI();
         
         // Recharger les articles sur la page d'accueil si la fonction existe
@@ -208,8 +253,68 @@ class AuthManager {
         }
     }
 
+    // Fonction pour nettoyer complètement l'authentification corrompue
+    clearCorruptedAuth() {
+        derror('🧹 Nettoyage authentification corrompue');
+        localStorage.clear();
+        this.token = null;
+        this.user = null;
+        this.isAuthenticated = false;
+        this.updateUI();
+        
+        this.showAlert('Session corrompue nettoyée. Veuillez vous reconnecter.', 'warning');
+    }
+
+    // Fonction de diagnostic pour debugging
+    debugAuth() {
+        console.log('🔍 État authentification:');
+        console.log('- Token:', this.token ? this.token.substring(0, 20) + '...' : 'null');
+        console.log('- User:', this.user);
+        console.log('- isAuthenticated:', this.isAuthenticated);
+        
+        const storedToken = localStorage.getItem('token');
+        console.log('- localStorage token:', storedToken ? storedToken.substring(0, 20) + '...' : 'null');
+        
+        if (storedToken) {
+            const parts = storedToken.split('.');
+            console.log('- Token parties:', parts.length);
+            
+            if (parts.length === 3) {
+                try {
+                    const payload = JSON.parse(atob(parts[1]));
+                    console.log('- Token payload:', payload);
+                    console.log('- Token exp:', new Date(payload.exp * 1000));
+                } catch (e) {
+                    console.error('- Erreur décodage payload:', e);
+                }
+            }
+        }
+        
+        console.log('- localStorage complet:', {...localStorage});
+    }
+
     isAuthenticated() {
-        return this.token !== null && this.user !== null;
+        const hasTokenAndUser = this.token !== null && this.user !== null;
+        dlog('🔍 isAuthenticated check - Token:', !!this.token, 'User:', !!this.user, 'Result:', hasTokenAndUser);
+        return hasTokenAndUser;
+    }
+
+    // Méthode pour obtenir l'utilisateur actuel
+    getCurrentUser() {
+        return this.user;
+    }
+
+    // Méthode pour attendre que l'AuthManager soit prêt
+    async waitForReady() {
+        while (!this.isReady) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        return this;
+    }
+
+    // Alias pour verifyToken (utilisé dans d'autres fichiers)
+    async verifyAuth() {
+        return await this.verifyToken();
     }
 
     isAdmin() {
@@ -231,22 +336,13 @@ class AuthManager {
         const adminBtn = document.getElementById('adminBtn');
         const memberNotice = document.getElementById('memberNotice');
 
+        dlog('🎨 UpdateUI - isAuthenticated:', this.isAuthenticated(), 'User:', this.user?.email);
+
         if (this.isAuthenticated()) {
             // Utilisateur connecté
             if (authButtons) authButtons.style.display = 'none';
             if (userMenu) {
                 userMenu.style.display = 'block';
-                
-                // Ajouter le lien vers "Mes Événements" si pas déjà présent
-                if (!userMenu.querySelector('.my-events-link')) {
-                    const userDropdown = userMenu.querySelector('.user-dropdown');
-                    if (userDropdown && !document.body.classList.contains('admin-page')) {
-                        const myEventsBtn = document.createElement('button');
-                        myEventsBtn.className = 'btn-my-events my-events-link';
-                        myEventsBtn.innerHTML = '<a href="/mes-evenements">Mes Événements</a>';
-                        userDropdown.insertBefore(myEventsBtn, userDropdown.firstChild);
-                    }
-                }
             }
             if (userName) userName.textContent = `${this.user.firstname} ${this.user.lastname}`;
             
@@ -402,6 +498,39 @@ class AuthManager {
 
 // Instance globale de l'AuthManager
 window.authManager = new AuthManager();
+
+// Fonctions utilitaires globales pour debugging
+window.authDebug = function() {
+    if (window.authManager) {
+        window.authManager.debugAuth();
+    } else {
+        console.log('❌ AuthManager non initialisé');
+    }
+};
+
+window.authClear = function() {
+    if (window.authManager) {
+        window.authManager.clearCorruptedAuth();
+    } else {
+        console.log('❌ AuthManager non initialisé, nettoyage manuel...');
+        localStorage.clear();
+        location.reload();
+    }
+};
+
+window.authCheck = function() {
+    if (window.authManager) {
+        console.log('🔍 État AuthManager:');
+        console.log('- isReady:', window.authManager.isReady);
+        console.log('- isAuthenticated():', window.authManager.isAuthenticated());
+        console.log('- token présent:', !!window.authManager.token);
+        console.log('- user présent:', !!window.authManager.user);
+        console.log('- user email:', window.authManager.user?.email);
+        console.log('- isAdmin():', window.authManager.isAdmin());
+    } else {
+        console.log('❌ AuthManager non initialisé');
+    }
+};
 
 // Utilitaires globaux
 window.utils = {

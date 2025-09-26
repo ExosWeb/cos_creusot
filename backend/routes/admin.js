@@ -10,7 +10,7 @@ const router = express.Router();
 router.use(authenticateToken, requireAdmin);
 
 // GET - Dashboard avec statistiques générales
-router.get('/dashboard', logAction('view_admin_dashboard'), async (req, res) => {
+router.get('/dashboard', async (req, res) => {
     try {
         let userStats, articleStats, loginStats, visitStats, recentActivity;
 
@@ -121,7 +121,7 @@ router.get('/dashboard', logAction('view_admin_dashboard'), async (req, res) => 
 });
 
 // GET - Liste des utilisateurs
-router.get('/users', logAction('view_users_list', 'user'), async (req, res) => {
+router.get('/users', async (req, res) => {
     try {
         const { status } = req.query;
         const users = await User.getAll(status);
@@ -134,7 +134,7 @@ router.get('/users', logAction('view_users_list', 'user'), async (req, res) => {
 });
 
 // GET - Utilisateurs en attente
-router.get('/users/pending', logAction('view_pending_users', 'user'), async (req, res) => {
+router.get('/users/pending', async (req, res) => {
     try {
         const users = await User.getAll('pending');
         res.json(users);
@@ -146,13 +146,24 @@ router.get('/users/pending', logAction('view_pending_users', 'user'), async (req
 });
 
 // PATCH - Approuver un utilisateur
-router.patch('/users/:id/approve', logAction('approve_user', 'user'), async (req, res) => {
+router.patch('/users/:id/approve', async (req, res) => {
     try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ error: 'Utilisateur non trouvé' });
+        }
+        
         const updated = await User.updateStatus(req.params.id, 'approved', req.user.id);
         
         if (!updated) {
             return res.status(404).json({ error: 'Utilisateur non trouvé' });
         }
+
+        // Logger l'action
+        await logAction(req, 'approve_user', 'user', req.params.id, {
+            userEmail: user.email,
+            approvedBy: req.user.email
+        });
 
         res.json({ message: 'Utilisateur approuvé avec succès' });
 
@@ -163,13 +174,24 @@ router.patch('/users/:id/approve', logAction('approve_user', 'user'), async (req
 });
 
 // PATCH - Rejeter un utilisateur
-router.patch('/users/:id/reject', logAction('reject_user', 'user'), async (req, res) => {
+router.patch('/users/:id/reject', async (req, res) => {
     try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ error: 'Utilisateur non trouvé' });
+        }
+        
         const updated = await User.updateStatus(req.params.id, 'rejected', req.user.id);
         
         if (!updated) {
             return res.status(404).json({ error: 'Utilisateur non trouvé' });
         }
+
+        // Logger l'action
+        await logAction(req, 'reject_user', 'user', req.params.id, {
+            userEmail: user.email,
+            rejectedBy: req.user.email
+        });
 
         res.json({ message: 'Utilisateur rejeté avec succès' });
 
@@ -180,11 +202,16 @@ router.patch('/users/:id/reject', logAction('reject_user', 'user'), async (req, 
 });
 
 // DELETE - Supprimer un utilisateur
-router.delete('/users/:id', logAction('delete_user', 'user'), async (req, res) => {
+router.delete('/users/:id', async (req, res) => {
     try {
         // Empêcher la suppression de son propre compte
         if (parseInt(req.params.id) === req.user.id) {
             return res.status(400).json({ error: 'Vous ne pouvez pas supprimer votre propre compte' });
+        }
+
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ error: 'Utilisateur non trouvé' });
         }
 
         const deleted = await User.delete(req.params.id);
@@ -192,6 +219,12 @@ router.delete('/users/:id', logAction('delete_user', 'user'), async (req, res) =
         if (!deleted) {
             return res.status(404).json({ error: 'Utilisateur non trouvé' });
         }
+
+        // Logger l'action
+        await logAction(req, 'delete_user', 'user', req.params.id, {
+            userEmail: user.email,
+            deletedBy: req.user.email
+        });
 
         res.json({ message: 'Utilisateur supprimé avec succès' });
 
@@ -202,7 +235,7 @@ router.delete('/users/:id', logAction('delete_user', 'user'), async (req, res) =
 });
 
 // GET - Logs de connexion
-router.get('/logs/login', logAction('view_login_logs'), async (req, res) => {
+router.get('/logs/login', async (req, res) => {
     try {
         const { limit = 50, offset = 0 } = req.query;
         
@@ -223,7 +256,7 @@ router.get('/logs/login', logAction('view_login_logs'), async (req, res) => {
 });
 
 // GET - Logs de visite
-router.get('/logs/visit', logAction('view_visit_logs'), async (req, res) => {
+router.get('/logs/visit', async (req, res) => {
     try {
         const { limit = 50, offset = 0 } = req.query;
         
@@ -244,7 +277,7 @@ router.get('/logs/visit', logAction('view_visit_logs'), async (req, res) => {
 });
 
 // GET - Logs d'action
-router.get('/logs/action', logAction('view_action_logs'), async (req, res) => {
+router.get('/logs/action', async (req, res) => {
     try {
         const { limit = 50, offset = 0 } = req.query;
         
@@ -342,41 +375,56 @@ router.get('/messages', async (req, res) => {
         let sql = `
             SELECT 
                 id,
-                name,
+                first_name,
+                last_name,
                 email,
                 phone,
                 subject,
                 message,
-                status,
-                created_at,
-                updated_at
+                newsletter,
+                read_at,
+                created_at
             FROM contact_messages
         `;
         
         const params = [];
         
+        // Filtrer par statut si spécifié
         if (status && status !== '') {
-            sql += ' WHERE status = ?';
-            params.push(status);
+            if (status === 'new') {
+                sql += ' WHERE read_at IS NULL';
+            } else if (status === 'read') {
+                sql += ' WHERE read_at IS NOT NULL';
+            }
+            // Note: pas de statut 'replied' dans cette table
         }
         
         sql += ' ORDER BY created_at DESC';
         
         const [messages] = await pool.query(sql, params);
         
+        // Ajouter le statut calculé et le nom complet
+        const processedMessages = messages.map(msg => ({
+            ...msg,
+            name: `${msg.first_name} ${msg.last_name}`,
+            status: msg.read_at ? 'read' : 'new'
+        }));
+        
         // Statistiques
         const [stats] = await pool.query(`
             SELECT 
                 COUNT(*) as total,
-                SUM(CASE WHEN status = 'new' THEN 1 ELSE 0 END) as new_count,
-                SUM(CASE WHEN status = 'read' THEN 1 ELSE 0 END) as read_count,
-                SUM(CASE WHEN status = 'replied' THEN 1 ELSE 0 END) as replied_count
+                SUM(CASE WHEN read_at IS NULL THEN 1 ELSE 0 END) as new_count,
+                SUM(CASE WHEN read_at IS NOT NULL THEN 1 ELSE 0 END) as read_count
             FROM contact_messages
         `);
         
         res.json({
-            messages,
-            stats: stats[0]
+            messages: processedMessages,
+            stats: {
+                ...stats[0],
+                replied_count: 0 // Pas de statut replied dans cette table
+            }
         });
         
     } catch (error) {
@@ -391,14 +439,35 @@ router.get('/messages/:id', async (req, res) => {
         const { id } = req.params;
         
         const [messages] = await pool.query(`
-            SELECT * FROM contact_messages WHERE id = ?
+            SELECT 
+                id,
+                first_name,
+                last_name,
+                email,
+                phone,
+                subject,
+                message,
+                newsletter,
+                read_at,
+                created_at
+            FROM contact_messages 
+            WHERE id = ?
         `, [id]);
         
         if (messages.length === 0) {
             return res.status(404).json({ error: 'Message non trouvé' });
         }
         
-        res.json(messages[0]);
+        const message = messages[0];
+        
+        // Ajouter le nom complet et le statut calculé
+        const processedMessage = {
+            ...message,
+            name: `${message.first_name} ${message.last_name}`,
+            status: message.read_at ? 'read' : 'new'
+        };
+        
+        res.json(processedMessage);
         
     } catch (error) {
         console.error('Erreur lors de la récupération du message:', error);
@@ -406,22 +475,28 @@ router.get('/messages/:id', async (req, res) => {
     }
 });
 
-// Messages de contact - Mettre à jour le statut d'un message
+// Messages de contact - Mettre à jour le statut d'un message (marquer comme lu)
 router.put('/messages/:id/status', async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
         
-        const validStatuses = ['new', 'read', 'replied'];
-        if (!validStatuses.includes(status)) {
-            return res.status(400).json({ error: 'Statut invalide' });
+        // Adapter au schéma réel de la table
+        if (status === 'read') {
+            await pool.query(`
+                UPDATE contact_messages 
+                SET read_at = NOW() 
+                WHERE id = ?
+            `, [id]);
+        } else if (status === 'new') {
+            await pool.query(`
+                UPDATE contact_messages 
+                SET read_at = NULL 
+                WHERE id = ?
+            `, [id]);
+        } else {
+            return res.status(400).json({ error: 'Statut invalide. Seuls "new" et "read" sont supportés.' });
         }
-        
-        await pool.query(`
-            UPDATE contact_messages 
-            SET status = ?, updated_at = NOW() 
-            WHERE id = ?
-        `, [status, id]);
         
         res.json({ message: 'Statut mis à jour' });
         
@@ -436,8 +511,8 @@ router.put('/messages/mark-all-read', async (req, res) => {
     try {
         await pool.query(`
             UPDATE contact_messages 
-            SET status = 'read', updated_at = NOW() 
-            WHERE status = 'new'
+            SET read_at = NOW() 
+            WHERE read_at IS NULL
         `);
         
         res.json({ message: 'Tous les messages ont été marqués comme lus' });
@@ -459,6 +534,69 @@ router.delete('/messages/:id', async (req, res) => {
         
     } catch (error) {
         console.error('Erreur lors de la suppression du message:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// Utilisateurs - Modifier le rôle d'un utilisateur
+router.patch('/users/:id/role', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { role } = req.body;
+        
+        // Vérifier que le rôle est valide
+        const validRoles = ['member', 'admin', 'retraite'];
+        if (!validRoles.includes(role)) {
+            return res.status(400).json({ 
+                error: 'Rôle invalide. Les rôles autorisés sont: member, admin, retraite' 
+            });
+        }
+        
+        // Vérifier que l'utilisateur existe
+        const [existingUsers] = await pool.execute(
+            'SELECT id, email, role FROM users WHERE id = ?', 
+            [id]
+        );
+        
+        if (existingUsers.length === 0) {
+            return res.status(404).json({ error: 'Utilisateur non trouvé' });
+        }
+        
+        const user = existingUsers[0];
+        
+        // Empêcher de se retirer ses propres droits admin
+        if (user.id === req.user.id && user.role === 'admin' && role !== 'admin') {
+            return res.status(403).json({ 
+                error: 'Vous ne pouvez pas vous retirer vos propres droits administrateur' 
+            });
+        }
+        
+        // Mettre à jour le rôle
+        await pool.execute(
+            'UPDATE users SET role = ? WHERE id = ?', 
+            [role, id]
+        );
+        
+        // Logger l'action
+        await logAction(req, 'change_user_role', 'user', id, {
+            userEmail: user.email,
+            oldRole: user.role,
+            newRole: role,
+            changedBy: req.user.email
+        });
+        
+        res.json({ 
+            success: true, 
+            message: `Rôle de l'utilisateur ${user.email} mis à jour vers ${role}`,
+            user: {
+                id: user.id,
+                email: user.email,
+                role: role
+            }
+        });
+        
+    } catch (error) {
+        console.error('Erreur lors de la modification du rôle:', error);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });

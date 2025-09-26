@@ -52,10 +52,17 @@ const checkArticleAccess = (req, res, next) => {
         return next();
     }
     
-    // Les retraités n'ont accès qu'aux articles 'retraites'
-    if (req.user.role === 'retraite') {
-        req.articleFilter = { category: 'retraites' };
+        module.exports.authenticateToken = async (req, res, next) => {
+            const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+            let token = null;
+            if (authHeader) {
+                if (authHeader.startsWith('Bearer ')) token = authHeader.slice(7);
+                else token = authHeader; // fallback si déjà juste le token
+            } else if (req.query && req.query.token) {
+                token = req.query.token;
+            }
         return next();
+            if (!token) return res.status(401).json({ error: 'Accès non autorisé : token manquant' });
     }
     
     // Les membres normaux ont accès à tout sauf 'retraites'
@@ -98,24 +105,11 @@ const filterArticlesByRole = (req, res, next) => {
     next();
 };
 
-// Middleware pour logger les actions
-const logAction = (action, resourceType = null) => {
-    return async (req, res, next) => {
-        try {
-            const userId = req.user ? req.user.id : null;
-            const resourceId = req.params.id || null;
-            const ip = req.ip || req.connection.remoteAddress;
-            const userAgent = req.get('User-Agent');
-            
-            await pool.execute(
-                'INSERT INTO action_logs (user_id, action, resource_type, resource_id, details, ip_address, user_agent) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [userId, action, resourceType, resourceId, JSON.stringify(req.body), ip, userAgent]
-            );
-        } catch (error) {
-            console.error('Erreur lors du logging:', error);
-        }
-        next();
-    };
+const { logImportantAction } = require('./logger');
+
+// Fonction pour logger seulement les actions importantes
+const logAction = async (req, action, resourceType = null, resourceId = null, details = null) => {
+    await logImportantAction(req, action, resourceType, resourceId, details);
 };
 
 module.exports = {

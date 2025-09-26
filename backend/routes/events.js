@@ -192,6 +192,28 @@ router.post('/', authenticateToken, requireAdmin, [
             is_member_only = false
         } = req.body;
 
+        // Debug: vérifier les paramètres reçus
+        console.log('📋 Paramètres reçus pour création d\'événement:');
+        console.log('- title:', title);
+        console.log('- description:', description);
+        console.log('- start_date:', start_date);
+        console.log('- end_date:', end_date);
+        console.log('- start_time:', start_time);
+        console.log('- end_time:', end_time);
+        console.log('- location:', location);
+        console.log('- category:', category);
+        console.log('- max_participants:', max_participants);
+        console.log('- is_member_only:', is_member_only);
+        console.log('- created_by:', req.user.userId);
+
+        // Validation des champs obligatoires
+        if (!title || !start_date || !start_time) {
+            return res.status(400).json({
+                success: false,
+                message: 'Les champs titre, date de début et heure de début sont obligatoires'
+            });
+        }
+
         // Vérifier que la date de fin n'est pas antérieure à la date de début
         if (end_date && new Date(end_date) < new Date(start_date)) {
             return res.status(400).json({
@@ -200,24 +222,30 @@ router.post('/', authenticateToken, requireAdmin, [
             });
         }
 
+        // Préparer les paramètres en s'assurant qu'aucun n'est undefined
+        const params = [
+            title || null,
+            description || null,
+            start_date || null,
+            end_date || null,
+            start_time || null,
+            end_time || null,
+            location || null,
+            category || 'general',
+            max_participants ? parseInt(max_participants) : null,
+            is_member_only ? 1 : 0, // Convertir boolean en int pour MySQL
+            req.user.userId || null
+        ];
+
+        // Debug: vérifier les paramètres finaux
+        console.log('🔧 Paramètres SQL finaux:', params);
+
         const [result] = await pool.execute(`
             INSERT INTO events (
                 title, description, start_date, end_date, start_time, end_time, 
                 location, category, max_participants, is_member_only, created_by
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
-            title,
-            description || null,
-            start_date,
-            end_date || null,
-            start_time,
-            end_time || null,
-            location || null,
-            category,
-            max_participants || null,
-            is_member_only,
-            req.user.userId
-        ]);
+        `, params);
 
         res.status(201).json({
             success: true,
@@ -239,21 +267,27 @@ router.post('/', authenticateToken, requireAdmin, [
  * PUT /api/events/:id
  */
 router.put('/:id', authenticateToken, requireAdmin, [
-    body('title').optional().isLength({ min: 3, max: 255 }).withMessage('Le titre doit contenir entre 3 et 255 caractères'),
+    body('title').optional().isLength({ min: 1, max: 255 }).withMessage('Le titre doit contenir entre 1 et 255 caractères'),
     body('description').optional().isLength({ max: 2000 }).withMessage('La description ne peut dépasser 2000 caractères'),
-    body('start_date').optional().isDate().withMessage('Date de début invalide'),
-    body('end_date').optional().isDate().withMessage('Date de fin invalide'),
-    body('start_time').optional().matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Heure de début invalide'),
-    body('end_time').optional().matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Heure de fin invalide'),
+    body('start_date').optional().isLength({ min: 1 }).withMessage('Date de début requise'),
+    body('end_date').optional().isLength({ min: 0 }).withMessage('Date de fin invalide'),
+    body('start_time').optional().isLength({ min: 1 }).withMessage('Heure de début requise'),
+    body('end_time').optional().isLength({ min: 0 }).withMessage('Heure de fin invalide'),
     body('location').optional().isLength({ max: 255 }).withMessage('Lieu trop long'),
-    body('category').optional().isIn(['general', 'voyage', 'retraite', 'activite']).withMessage('Catégorie invalide'),
-    body('max_participants').optional().isInt({ min: 1 }).withMessage('Nombre de participants invalide'),
-    body('is_member_only').optional().isBoolean().withMessage('Valeur membre uniquement invalide'),
+    body('category').optional().isLength({ min: 1 }).withMessage('Catégorie requise'),
+    body('max_participants').optional().isNumeric().withMessage('Nombre de participants doit être numérique'),
+    body('is_member_only').optional().toBoolean(),
     body('status').optional().isIn(['draft', 'published', 'cancelled']).withMessage('Statut invalide')
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
+        
+        // Debug: afficher les données reçues pour la mise à jour
+        console.log('🔄 Mise à jour événement ID:', req.params.id);
+        console.log('📋 Données reçues:', req.body);
+        
         if (!errors.isEmpty()) {
+            console.log('❌ Erreurs de validation:', errors.array());
             return res.status(400).json({ 
                 success: false, 
                 message: 'Données invalides',

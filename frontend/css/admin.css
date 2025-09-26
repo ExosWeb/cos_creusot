@@ -25,7 +25,7 @@
     text-decoration: none;
     font-weight: 500;
     border-bottom: 3px solid transparent;
-    transition: var(--transition);
+    transition: var(--transition-colors);
     position: relative;
     will-change: color, background, border-bottom-color;
 }
@@ -399,6 +399,43 @@
     color: var(--primary-blue);
 }
 
+.role-badge.retraite {
+    background: rgba(255, 193, 7, 0.2);
+    color: #856404;
+}
+
+/* Select pour les rôles dans le tableau */
+.role-select {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #495057;
+    cursor: pointer;
+    transition: var(--transition);
+    min-width: 120px;
+}
+
+.role-select:hover:not(:disabled) {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 0.2rem rgba(31, 71, 136, 0.25);
+}
+
+.role-select:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 0.2rem rgba(31, 71, 136, 0.25);
+    outline: none;
+}
+
+.role-select:disabled {
+    background-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 .table-actions {
     display: flex;
     gap: 0.5rem;
@@ -569,7 +606,7 @@
     border: 2px solid #e1e5e9;
     border-radius: var(--border-radius);
     font-size: 0.95rem;
-    transition: var(--transition);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     background: var(--primary-white);
     font-family: inherit;
 }
@@ -716,7 +753,7 @@
     border: 2px solid var(--primary-red);
     border-radius: var(--border-radius);
     padding: 1rem;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     cursor: pointer;
     will-change: transform;
 }
@@ -734,7 +771,7 @@
     border-radius: 50%;
     position: relative;
     flex-shrink: 0;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1267,4 +1304,105 @@
     .info-label {
         min-width: auto;
     }
+}
+
+/* Styles pour les filtres compacts */
+.filter-select {
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 6px;
+    background: white;
+    color: var(--text-dark);
+    transition: var(--transition);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25rem;
+    min-width: 150px;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-input {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 6px;
+    background: white;
+    color: var(--text-dark);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    min-width: 200px;
+}
+
+.filter-input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-input::placeholder {
+    color: var(--text-light);
+}
+
+/* Styles des tableaux admin */
+.table-container {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e1e5e9;
+    margin-top: 1rem;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.admin-table thead {
+    background: #f8f9fa;
+}
+
+.admin-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-dark);
+    border-bottom: 2px solid #e1e5e9;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.admin-table td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid #f1f3f4;
+    color: var(--text-color);
+    vertical-align: middle;
+}
+
+.admin-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.admin-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-table .text-center {
+    text-align: center;
+}
+
+.admin-table .loading {
+    color: var(--text-light);
+    font-style: italic;
+    padding: 2rem 0;
 }

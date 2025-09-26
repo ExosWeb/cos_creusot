@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/home.css">
     <link rel="stylesheet" href="css/search.css">
+    <link rel="stylesheet" href="css/article-modal.css">
+    <link rel="stylesheet" href="css/animations-optimized.css">
+    <!-- FontAwesome for modern icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <!-- Header -->
@@ -14,7 +18,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <div class="logo-icon">🏛️</div>
+                    <div class="logo-icon"><i class="fas fa-landmark"></i></div>
                     <div class="logo-text">
                         <h1>COS Creusot</h1>
                         <span>Comité des Œuvres Sociales</span>
@@ -28,6 +32,7 @@
                         <li><a href="/voyages">Voyages</a></li>
                         <li><a href="/retraites">Retraites</a></li>
                         <li><a href="/evenements">Événements</a></li>
+                        <li><a href="/calendrier">Calendrier</a></li>
                         <li><a href="/contact">Contact</a></li>
                     </ul>
                 </nav>
@@ -62,17 +67,17 @@
 
     <!-- Hero Section -->
     <section class="hero">
-        <div class="hero-content">
+        <div class="hero-content fadeInUp">
             <h2>Bienvenue au COS du Creusot</h2>
             <p>Découvrez tous les avantages et services du Comité des Œuvres Sociales de la ville du Creusot</p>
-            <div class="hero-buttons">
+            <div class="hero-buttons fadeInUp" style="animation-delay: 0.2s;">
                 <a href="/inscription" class="btn btn-primary btn-large">Nous rejoindre</a>
                 <a href="/avantages" class="btn btn-outline btn-large">Découvrir nos avantages</a>
             </div>
         </div>
         <div class="hero-image">
             <div class="hero-placeholder">
-                <span>🏛️</span>
+                <i class="fas fa-city hero-city-icon"></i>
                 <p>Le Creusot</p>
             </div>
         </div>
@@ -91,31 +96,31 @@
     <!-- Services Grid -->
     <section class="services-section">
         <div class="container">
-            <h2 class="section-title">Nos Services</h2>
+            <h2 class="section-title fadeInUp">Nos Services</h2>
             <div class="services-grid">
-                <div class="service-card">
-                    <div class="service-icon">🎁</div>
+                <div class="service-card fadeInUp" style="animation-delay: 0.1s;">
+                    <div class="service-icon"><i class="fas fa-gift"></i></div>
                     <h3>Avantages</h3>
                     <p>Profitez de nombreux avantages exclusifs réservés aux membres du COS</p>
                     <a href="/avantages" class="btn btn-secondary">Découvrir</a>
                 </div>
                 
-                <div class="service-card">
-                    <div class="service-icon">✈️</div>
+                <div class="service-card fadeInUp" style="animation-delay: 0.2s;">
+                    <div class="service-icon"><i class="fas fa-plane"></i></div>
                     <h3>Voyages</h3>
                     <p>Partez à la découverte de nouvelles destinations avec nos voyages organisés</p>
                     <a href="/voyages" class="btn btn-secondary">Voir les voyages</a>
                 </div>
                 
-                <div class="service-card">
-                    <div class="service-icon">🌟</div>
+                <div class="service-card fadeInUp" style="animation-delay: 0.3s;">
+                    <div class="service-icon"><i class="fas fa-star"></i></div>
                     <h3>Retraites</h3>
                     <p>Services et accompagnement dédiés aux retraités de la ville</p>
                     <a href="/retraites" class="btn btn-secondary">En savoir plus</a>
                 </div>
                 
                 <div class="service-card">
-                    <div class="service-icon">🎉</div>
+                    <div class="service-icon"><i class="fas fa-calendar-alt"></i></div>
                     <h3>Événements</h3>
                     <p>Participez aux événements et activités organisés par le COS</p>
                     <a href="/evenements" class="btn btn-secondary">Voir les événements</a>
@@ -158,17 +163,17 @@
                 
                 <div class="footer-section">
                     <h4>Contact</h4>
-                    <p>📧 contact@cos-creusot.fr</p>
-                    <p>📞 03 85 XX XX XX</p>
-                    <p>📍 Le Creusot, France</p>
+                    <p><i class="fas fa-envelope"></i> contact@cos-creusot.fr</p>
+                    <p><i class="fas fa-phone"></i> 03 85 XX XX XX</p>
+                    <p><i class="fas fa-map-marker-alt"></i> Le Creusot, France</p>
                 </div>
                 
                 <div class="footer-section">
                     <h4>Suivez-nous</h4>
                     <div class="social-links">
-                        <a href="#" class="social-link">Facebook</a>
-                        <a href="#" class="social-link">Twitter</a>
-                        <a href="#" class="social-link">LinkedIn</a>
+                        <a href="#" class="social-link"><i class="fab fa-facebook-f"></i> Facebook</a>
+                        <a href="#" class="social-link"><i class="fab fa-twitter"></i> Twitter</a>
+                        <a href="#" class="social-link"><i class="fab fa-linkedin-in"></i> LinkedIn</a>
                     </div>
                 </div>
             </div>
@@ -179,8 +184,11 @@
         </div>
     </footer>
 
+    <script src="js/debug.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/article-modal.js"></script>
     <script src="js/search.js"></script>
     <script src="js/home.js"></script>
+    <script src="js/animations.js"></script>
 </body>
 </html>

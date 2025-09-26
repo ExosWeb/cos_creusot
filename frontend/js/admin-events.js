@@ -83,7 +83,7 @@ class AdminEventsManager {
 
     async loadEvents() {
         try {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem('token');
             const response = await fetch('/api/events?limit=100', {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -103,7 +103,7 @@ class AdminEventsManager {
 
     async loadStats() {
         try {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem('token');
             const response = await fetch('/api/admin/stats/events', {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -315,7 +315,7 @@ class AdminEventsManager {
         };
 
         try {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem('token');
             const url = this.currentEventId ? `/api/events/${this.currentEventId}` : '/api/events';
             const method = this.currentEventId ? 'PUT' : 'POST';
 
@@ -361,7 +361,9 @@ class AdminEventsManager {
         }
 
         try {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem('token'); // Correction: 'token' au lieu de 'authToken'
+            console.log('🔑 Token pour suppression:', token ? 'Présent' : 'Absent');
+            
             const response = await fetch(`/api/events/${eventId}`, {
                 method: 'DELETE',
                 headers: {
@@ -369,7 +371,9 @@ class AdminEventsManager {
                 }
             });
 
+            console.log('📡 Réponse suppression:', response.status, response.statusText);
             const data = await response.json();
+            console.log('📄 Data réponse:', data);
 
             if (data.success) {
                 this.showSuccess('Événement supprimé avec succès');
@@ -395,7 +399,7 @@ class AdminEventsManager {
         document.getElementById('registrationsModal').style.display = 'flex';
 
         try {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem('token');
             const response = await fetch(`/api/events/${eventId}/registrations`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -454,7 +458,7 @@ class AdminEventsManager {
         if (!this.currentEventId) return;
 
         try {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem('token');
             const response = await fetch(`/api/events/${this.currentEventId}/export`, {
                 headers: {
                     'Authorization': `Bearer ${token}`

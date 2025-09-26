@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Événements - COS Creusot</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/category.css">
+    <link rel="stylesheet" href="css/category.css">  
     <link rel="stylesheet" href="css/search.css">
     <link rel="stylesheet" href="css/calendar.css">
 </head>
@@ -29,6 +29,7 @@
                         <li><a href="/voyages">Voyages</a></li>
                         <li><a href="/retraites">Retraites</a></li>
                         <li><a href="/evenements" class="active">Événements</a></li>
+                        <li><a href="/calendrier">Calendrier</a></li>
                         <li><a href="/contact">Contact</a></li>
                     </ul>
                 </nav>
@@ -85,15 +86,6 @@
                         <a href="/connexion" class="btn btn-outline">Se connecter</a>
                     </div>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Calendrier des événements -->
-    <section class="calendar-section">
-        <div class="container">
-            <div class="calendar-container">
-                <!-- Le calendrier sera généré ici par JavaScript -->
             </div>
         </div>
     </section>
@@ -157,9 +149,9 @@
         </div>
     </footer>
 
+    <script src="js/debug.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/search.js"></script>
-    <script src="js/calendar.js"></script>
     <script src="js/event-registration.js"></script>
     <script src="js/category.js"></script>
     <script>
@@ -170,7 +162,7 @@
             icon: '🎉'
         };
         
-        // Marquer la page comme ayant besoin du calendrier
+        // Marquer la page comme page d'événements (articles seulement)
         document.body.classList.add('events-page');
         
         // Initialiser le système d'inscription aux événements

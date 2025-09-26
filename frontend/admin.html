@@ -7,6 +7,15 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/admin.css">
     <link rel="stylesheet" href="css/calendar.css">
+    <style>
+        /* Forcer la modal de messages à rester cachée */
+        #messageModal {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -76,7 +85,7 @@
                     <h2>Gestion des utilisateurs</h2>
                     
                     <div class="tab-filters">
-                        <select id="userStatusFilter">
+                        <select id="userStatusFilter" class="filter-select">
                             <option value="">Tous les utilisateurs</option>
                             <option value="pending">En attente</option>
                             <option value="approved">Approuvés</option>
@@ -187,14 +196,14 @@
                 <!-- Filtres pour les événements -->
                 <div class="filters-section">
                     <div class="filters-row">
-                        <select id="eventsStatusFilter">
+                        <select id="eventsStatusFilter" class="filter-select">
                             <option value="">Tous les statuts</option>
                             <option value="draft">Brouillon</option>
                             <option value="published">Publié</option>
                             <option value="cancelled">Annulé</option>
                         </select>
 
-                        <select id="eventsCategoryFilter">
+                        <select id="eventsCategoryFilter" class="filter-select">
                             <option value="">Toutes les catégories</option>
                             <option value="general">Général</option>
                             <option value="voyage">Voyage</option>
@@ -202,7 +211,7 @@
                             <option value="activite">Activité</option>
                         </select>
 
-                        <input type="text" id="eventsSearchFilter" placeholder="Rechercher un événement...">
+                        <input type="text" id="eventsSearchFilter" placeholder="Rechercher un événement..." class="filter-input">
                         
                         <button class="btn btn-outline" id="refreshEventsBtn">🔄 Actualiser</button>
                     </div>
@@ -243,11 +252,10 @@
                     <h2>Messages de contact</h2>
                     
                     <div class="tab-filters">
-                        <select id="messageStatusFilter">
+                        <select id="messageStatusFilter" class="filter-select">
                             <option value="">Tous les messages</option>
                             <option value="new">Nouveaux</option>
                             <option value="read">Lus</option>
-                            <option value="replied">Répondus</option>
                         </select>
                         <button class="btn btn-secondary" id="markAllReadBtn">
                             Marquer tout comme lu
@@ -283,7 +291,7 @@
                     <h2>Journaux d'activité</h2>
                     
                     <div class="tab-filters">
-                        <select id="logTypeFilter">
+                        <select id="logTypeFilter" class="filter-select">
                             <option value="action">Actions</option>
                             <option value="login">Connexions</option>
                             <option value="visit">Visites</option>
@@ -566,12 +574,12 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="eventTitle">Titre de l'événement *</label>
-                        <input type="text" id="eventTitle" name="title" required>
+                        <input type="text" id="eventTitle" name="title" class="form-input" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="eventCategory">Catégorie</label>
-                        <select id="eventCategory" name="category">
+                        <select id="eventCategory" name="category" class="form-select">
                             <option value="general">Général</option>
                             <option value="voyage">Voyage</option>
                             <option value="retraite">Retraite</option>
@@ -582,42 +590,42 @@
 
                 <div class="form-group">
                     <label for="eventDescription">Description</label>
-                    <textarea id="eventDescription" name="description" rows="4"></textarea>
+                    <textarea id="eventDescription" name="description" rows="4" class="form-textarea"></textarea>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="eventStartDate">Date de début *</label>
-                        <input type="date" id="eventStartDate" name="start_date" required>
+                        <input type="date" id="eventStartDate" name="start_date" class="form-input" required>
                     </div>
 
                     <div class="form-group">
                         <label for="eventEndDate">Date de fin</label>
-                        <input type="date" id="eventEndDate" name="end_date">
+                        <input type="date" id="eventEndDate" name="end_date" class="form-input">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="eventStartTime">Heure de début *</label>
-                        <input type="time" id="eventStartTime" name="start_time" required>
+                        <input type="time" id="eventStartTime" name="start_time" class="form-input" required>
                     </div>
 
                     <div class="form-group">
                         <label for="eventEndTime">Heure de fin</label>
-                        <input type="time" id="eventEndTime" name="end_time">
+                        <input type="time" id="eventEndTime" name="end_time" class="form-input">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="eventLocation">Lieu</label>
-                        <input type="text" id="eventLocation" name="location">
+                        <input type="text" id="eventLocation" name="location" class="form-input">
                     </div>
 
                     <div class="form-group">
                         <label for="eventMaxParticipants">Nombre max de participants</label>
-                        <input type="number" id="eventMaxParticipants" name="max_participants" min="1">
+                        <input type="number" id="eventMaxParticipants" name="max_participants" min="1" class="form-input">
                     </div>
                 </div>
 
@@ -631,7 +639,7 @@
 
                     <div class="form-group">
                         <label for="eventStatus">Statut</label>
-                        <select id="eventStatus" name="status">
+                        <select id="eventStatus" name="status" class="form-select">
                             <option value="draft">Brouillon</option>
                             <option value="published">Publié</option>
                             <option value="cancelled">Annulé</option>
@@ -736,7 +744,6 @@
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" id="markAsReadBtn">Marquer comme lu</button>
-                <button type="button" class="btn btn-primary" id="markAsRepliedBtn">Marquer comme répondu</button>
                 <button type="button" class="btn btn-secondary" id="closeMessageDetailBtn">Fermer</button>
             </div>
         </div>

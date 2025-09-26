@@ -260,7 +260,13 @@ function createUserTableRow(user) {
             <td>${window.utils.escapeHtml(user.firstname)} ${window.utils.escapeHtml(user.lastname)}</td>
             <td>${window.utils.escapeHtml(user.email)}</td>
             <td><span class="status-badge ${user.status}">${getStatusLabel(user.status)}</span></td>
-            <td><span class="role-badge ${user.role}">${getRoleLabel(user.role)}</span></td>
+            <td>
+                <select class="role-select" onchange="updateUserRole(${user.id}, this.value)" ${user.id === getCurrentUserId() ? 'disabled title="Vous ne pouvez pas modifier votre propre rôle"' : ''}>
+                    <option value="member" ${user.role === 'member' ? 'selected' : ''}>Adhérent</option>
+                    <option value="retraite" ${user.role === 'retraite' ? 'selected' : ''}>Retraité</option>
+                    <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Administrateur</option>
+                </select>
+            </td>
             <td>${window.authManager.formatShortDate(user.created_at)}</td>
             <td>
                 <div class="table-actions">
@@ -410,49 +416,13 @@ function bindAdminEvents() {
         markAllReadBtn.addEventListener('click', markAllMessagesAsRead);
     }
 
-    // Modal message - Boutons
-    const closeMessageModal = document.getElementById('closeMessageModal');
-    const closeMessageDetailBtn = document.getElementById('closeMessageDetailBtn');
-    const markAsReadBtn = document.getElementById('markAsReadBtn');
-    const markAsRepliedBtn = document.getElementById('markAsRepliedBtn');
+    // Modal message - Boutons DÉSACTIVÉS
+    // const closeMessageModal = document.getElementById('closeMessageModal');
+    // const closeMessageDetailBtn = document.getElementById('closeMessageDetailBtn');
+    // const markAsReadBtn = document.getElementById('markAsReadBtn');
 
-    if (closeMessageModal) {
-        closeMessageModal.addEventListener('click', () => {
-            document.getElementById('messageModal').style.display = 'none';
-        });
-    }
-
-    if (closeMessageDetailBtn) {
-        closeMessageDetailBtn.addEventListener('click', () => {
-            document.getElementById('messageModal').style.display = 'none';
-        });
-    }
-
-    if (markAsReadBtn) {
-        markAsReadBtn.addEventListener('click', () => {
-            if (currentMessageId) {
-                markAsRead(currentMessageId);
-            }
-        });
-    }
-
-    if (markAsRepliedBtn) {
-        markAsRepliedBtn.addEventListener('click', () => {
-            if (currentMessageId) {
-                markAsReplied(currentMessageId);
-            }
-        });
-    }
-
-    // Fermer modal en cliquant à l'extérieur
-    const messageModal = document.getElementById('messageModal');
-    if (messageModal) {
-        messageModal.addEventListener('click', (e) => {
-            if (e.target === messageModal) {
-                messageModal.style.display = 'none';
-            }
-        });
-    }
+    // MODALS DE MESSAGES COMPLÈTEMENT DÉSACTIVÉES
+    // Plus aucune gestion d'événements pour les modals de messages
 }
 
 // Actions articles
@@ -588,6 +558,50 @@ function formatActivityDescription(activity) {
     return actions[activity.action] || activity.action;
 }
 
+// Fonction pour obtenir l'ID de l'utilisateur actuel
+function getCurrentUserId() {
+    // Cette fonction devrait récupérer l'ID depuis le token JWT
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.userId;
+    } catch (error) {
+        console.error('Erreur lors du décodage du token:', error);
+        return null;
+    }
+}
+
+// Fonction pour mettre à jour le rôle d'un utilisateur
+async function updateUserRole(userId, newRole) {
+    try {
+        const response = await window.authManager.makeAuthenticatedRequest(`/api/admin/users/${userId}/role`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ role: newRole })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            window.authManager.showAlert(`Rôle mis à jour vers ${getRoleLabel(newRole)}`, 'success');
+            // Pas besoin de recharger, le select est déjà mis à jour
+        } else {
+            window.authManager.showAlert(data.error || 'Erreur lors de la mise à jour du rôle', 'error');
+            // Recharger la liste pour restaurer l'ancien rôle
+            await loadUsers();
+        }
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour du rôle:', error);
+        window.authManager.showAlert('Erreur lors de la mise à jour du rôle', 'error');
+        // Recharger la liste pour restaurer l'ancien rôle
+        await loadUsers();
+    }
+}
+
 function getStatusLabel(status) {
     const labels = {
         'pending': 'En attente',
@@ -600,7 +614,8 @@ function getStatusLabel(status) {
 function getRoleLabel(role) {
     const labels = {
         'admin': 'Administrateur',
-        'member': 'Membre'
+        'member': 'Adhérent',
+        'retraite': 'Retraité'
     };
     return labels[role] || role;
 }
@@ -1143,7 +1158,8 @@ async function loadMessages(status = '') {
 
 function updateMessagesStats(stats) {
     document.getElementById('totalMessages').textContent = stats.total || 0;
-    document.getElementById('newMessages').textContent = stats.new_count || 0;
+    // Désactiver l'affichage des nouveaux messages pour éviter les popups
+    document.getElementById('newMessages').textContent = 0;
     document.getElementById('repliedMessages').textContent = stats.replied_count || 0;
 }
 
@@ -1213,8 +1229,8 @@ function createMessageCard(message) {
             <div class="message-footer">
                 <span class="message-date">${date}</span>
                 <div class="message-actions">
-                    <button class="btn btn-sm btn-outline" onclick="viewMessage(${message.id})">
-                        👁️ Voir
+                    <button class="btn btn-sm btn-outline" onclick="console.log('Bouton Voir désactivé')" disabled>
+                        👁️ Voir (Désactivé)
                     </button>
                     ${message.status === 'new' ? `
                         <button class="btn btn-sm btn-primary" onclick="markAsRead(${message.id})">
@@ -1231,6 +1247,10 @@ function createMessageCard(message) {
 }
 
 async function viewMessage(messageId) {
+    // Fonction désactivée pour éviter tous les popups
+    console.log('Fonction viewMessage désactivée pour éviter les popups');
+    return;
+    
     try {
         const response = await window.authManager.makeAuthenticatedRequest(`/api/admin/messages/${messageId}`);
         
@@ -1252,22 +1272,20 @@ async function viewMessage(messageId) {
         
         // Adapter les boutons selon le statut
         const markAsReadBtn = document.getElementById('markAsReadBtn');
-        const markAsRepliedBtn = document.getElementById('markAsRepliedBtn');
         
         markAsReadBtn.style.display = message.status === 'new' ? 'inline-block' : 'none';
-        markAsRepliedBtn.style.display = message.status !== 'replied' ? 'inline-block' : 'none';
         
-        // Afficher le modal
-        document.getElementById('messageModal').style.display = 'flex';
+        // MODAL DÉSACTIVÉE - Ne plus l'afficher
+        // document.getElementById('messageModal').style.display = 'flex';
         
-        // Marquer automatiquement comme lu si c'est nouveau
+        // Marquer automatiquement comme lu si c'est nouveau SANS ouvrir la modal
         if (message.status === 'new') {
             await updateMessageStatus(messageId, 'read');
         }
         
     } catch (error) {
         console.error('Erreur lors de la visualisation du message:', error);
-        window.authManager.showAlert('Erreur lors de la visualisation du message', 'error');
+        // window.authManager.showAlert('Erreur lors de la visualisation du message', 'error');
     }
 }
 
@@ -1282,10 +1300,6 @@ function getStatusLabel(status) {
 
 async function markAsRead(messageId) {
     await updateMessageStatus(messageId, 'read');
-}
-
-async function markAsReplied(messageId) {
-    await updateMessageStatus(messageId, 'replied');
 }
 
 async function updateMessageStatus(messageId, status) {

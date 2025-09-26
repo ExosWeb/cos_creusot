@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../config/database');
+const { logImportantAction } = require('../middleware/logger');
 
 const router = express.Router();
 
@@ -37,6 +38,14 @@ router.post('/', contactValidation, async (req, res) => {
         `, [firstName, lastName, email, phone, subject, message, newsletter ? 1 : 0, ip, userAgent]);
 
         console.log('✅ Message de contact enregistré avec ID:', result.insertId);
+
+        // Logger l'action
+        await logImportantAction(req, 'send_contact_message', 'message', result.insertId, {
+            senderEmail: email,
+            subject: subject,
+            hasPhone: !!phone,
+            subscribedToNewsletter: !!newsletter
+        });
 
         // TODO: Ici on pourrait ajouter l'envoi d'email à l'administration
         // await sendEmailToAdmin({ firstName, lastName, email, subject, message });

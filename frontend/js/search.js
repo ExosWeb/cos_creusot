@@ -16,45 +16,98 @@ class ArticleSearch {
     }
 
     createSearchInterface() {
+        // Détecter si on est sur une page de catégorie spécifique
+        const currentPath = window.location.pathname;
+        const isOnCategoryPage = currentPath.includes('/prestations') || 
+                                 currentPath.includes('/avantages') ||
+                                 currentPath.includes('/voyages') || 
+                                 currentPath.includes('/retraites') || 
+                                 currentPath.includes('/evenements');
+        
+        // Obtenir le nom de la catégorie actuelle
+        let currentCategoryName = '';
+        if (currentPath.includes('/prestations') || currentPath.includes('/avantages')) {
+            currentCategoryName = 'Prestations';
+        } else if (currentPath.includes('/voyages')) {
+            currentCategoryName = 'Voyages';
+        } else if (currentPath.includes('/retraites')) {
+            currentCategoryName = 'Retraites';
+        } else if (currentPath.includes('/evenements')) {
+            currentCategoryName = 'Événements';
+        }
+
         const searchContainer = document.createElement('div');
         searchContainer.className = 'article-search';
-        searchContainer.innerHTML = `
-            <div class="search-controls">
-                <div class="search-input-group">
-                    <input type="text" id="articleSearchInput" placeholder="Rechercher un article..." class="search-input">
-                    <button type="button" id="searchButton" class="search-btn">
-                        <span class="search-icon">🔍</span>
-                    </button>
+        
+        // Interface différente selon le contexte
+        if (isOnCategoryPage) {
+            // Interface simplifiée pour les pages de catégorie
+            searchContainer.innerHTML = `
+                <div class="search-controls">
+                    <div class="search-input-group">
+                        <input type="text" id="articleSearchInput" placeholder="Rechercher dans ${currentCategoryName}..." class="search-input">
+                        <button type="button" id="searchButton" class="search-btn">
+                            <span class="search-icon">🔍</span>
+                        </button>
+                    </div>
+                    
+                    <div class="search-stats">
+                        <span id="searchStats">Tous les articles de ${currentCategoryName}</span>
+                    </div>
                 </div>
                 
-                <div class="filter-group">
-                    <select id="categoryFilter" class="category-filter">
-                        <option value="">Toutes les catégories</option>
-                        <option value="general">Général</option>
-                        <option value="prestations">Prestations</option>
-                        <option value="voyages">Voyages</option>
-                        <option value="retraites">Retraites</option>
-                        <option value="evenements">Événements</option>
-                    </select>
+                <div id="searchResults" class="search-results">
+                    <!-- Résultats de recherche -->
                 </div>
                 
-                <div class="search-stats">
-                    <span id="searchStats">Tous les articles</span>
+                <div id="noResults" class="no-results" style="display: none;">
+                    <div class="no-results-content">
+                        <span class="no-results-icon">🔍</span>
+                        <h3>Aucun résultat trouvé</h3>
+                        <p>Essayez avec d'autres mots-clés dans ${currentCategoryName}</p>
+                    </div>
                 </div>
-            </div>
-            
-            <div id="searchResults" class="search-results">
-                <!-- Résultats de recherche -->
-            </div>
-            
-            <div id="noResults" class="no-results" style="display: none;">
-                <div class="no-results-content">
-                    <span class="no-results-icon">🔍</span>
-                    <h3>Aucun résultat trouvé</h3>
-                    <p>Essayez avec d'autres mots-clés ou changez de catégorie</p>
+            `;
+        } else {
+            // Interface complète pour les autres pages
+            searchContainer.innerHTML = `
+                <div class="search-controls">
+                    <div class="search-input-group">
+                        <input type="text" id="articleSearchInput" placeholder="Rechercher un article..." class="search-input">
+                        <button type="button" id="searchButton" class="search-btn">
+                            <span class="search-icon">🔍</span>
+                        </button>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <select id="categoryFilter" class="category-filter">
+                            <option value="">Toutes les catégories</option>
+                            <option value="general">Général</option>
+                            <option value="prestations">Prestations</option>
+                            <option value="voyages">Voyages</option>
+                            <option value="retraites">Retraites</option>
+                            <option value="evenements">Événements</option>
+                        </select>
+                    </div>
+                    
+                    <div class="search-stats">
+                        <span id="searchStats">Tous les articles</span>
+                    </div>
                 </div>
-            </div>
-        `;
+                
+                <div id="searchResults" class="search-results">
+                    <!-- Résultats de recherche -->
+                </div>
+                
+                <div id="noResults" class="no-results" style="display: none;">
+                    <div class="no-results-content">
+                        <span class="no-results-icon">🔍</span>
+                        <h3>Aucun résultat trouvé</h3>
+                        <p>Essayez avec d'autres mots-clés ou changez de catégorie</p>
+                    </div>
+                </div>
+            `;
+        }
 
         // Insérer avant le conteneur d'articles existant
         const articlesContainer = document.querySelector('.articles-grid, .category-articles');
@@ -113,13 +166,26 @@ class ArticleSearch {
                 this.updateStats();
             }
         } catch (error) {
-            console.error('Erreur lors du chargement des articles:', error);
+            derror('Erreur lors du chargement des articles:', error);
         }
     }
 
     performSearch() {
         const searchTerm = this.searchInput ? this.searchInput.value.toLowerCase().trim() : '';
         const selectedCategory = this.categoryFilter ? this.categoryFilter.value : '';
+        
+        // Détecter la catégorie de la page actuelle
+        const currentPath = window.location.pathname;
+        let pageCategory = '';
+        if (currentPath.includes('/prestations') || currentPath.includes('/avantages')) {
+            pageCategory = 'prestations';
+        } else if (currentPath.includes('/voyages')) {
+            pageCategory = 'voyages';
+        } else if (currentPath.includes('/retraites')) {
+            pageCategory = 'retraites';
+        } else if (currentPath.includes('/evenements')) {
+            pageCategory = 'evenements';
+        }
 
         this.filteredArticles = this.articles.filter(article => {
             const matchesSearch = !searchTerm || 
@@ -127,7 +193,10 @@ class ArticleSearch {
                 article.content.toLowerCase().includes(searchTerm) ||
                 article.excerpt.toLowerCase().includes(searchTerm);
 
-            const matchesCategory = !selectedCategory || article.category === selectedCategory;
+            // Si on est sur une page de catégorie, filtrer automatiquement par cette catégorie
+            // Sinon, utiliser le filtre sélectionné par l'utilisateur
+            const categoryToMatch = pageCategory || selectedCategory;
+            const matchesCategory = !categoryToMatch || article.category === categoryToMatch;
 
             return matchesSearch && matchesCategory;
         });
@@ -184,11 +253,41 @@ class ArticleSearch {
         const filtered = this.filteredArticles.length;
         const searchTerm = this.searchInput ? this.searchInput.value.trim() : '';
         const category = this.categoryFilter ? this.categoryFilter.value : '';
+        
+        // Détecter si on est sur une page de catégorie
+        const currentPath = window.location.pathname;
+        const isOnCategoryPage = currentPath.includes('/prestations') || 
+                                 currentPath.includes('/avantages') ||
+                                 currentPath.includes('/voyages') || 
+                                 currentPath.includes('/retraites') || 
+                                 currentPath.includes('/evenements');
+        
+        // Obtenir le nom de la catégorie actuelle
+        let currentCategoryName = '';
+        if (currentPath.includes('/prestations') || currentPath.includes('/avantages')) {
+            currentCategoryName = 'Prestations';
+        } else if (currentPath.includes('/voyages')) {
+            currentCategoryName = 'Voyages';
+        } else if (currentPath.includes('/retraites')) {
+            currentCategoryName = 'Retraites';
+        } else if (currentPath.includes('/evenements')) {
+            currentCategoryName = 'Événements';
+        }
 
-        if (searchTerm || category) {
-            this.searchStats.textContent = `${filtered} article${filtered > 1 ? 's' : ''} trouvé${filtered > 1 ? 's' : ''} sur ${total}`;
+        if (isOnCategoryPage) {
+            // Stats pour page de catégorie
+            if (searchTerm) {
+                this.searchStats.textContent = `${filtered} article${filtered > 1 ? 's' : ''} trouvé${filtered > 1 ? 's' : ''} dans ${currentCategoryName}`;
+            } else {
+                this.searchStats.textContent = `${filtered} article${filtered > 1 ? 's' : ''} en ${currentCategoryName}`;
+            }
         } else {
-            this.searchStats.textContent = `${total} article${total > 1 ? 's' : ''} au total`;
+            // Stats pour page générale
+            if (searchTerm || category) {
+                this.searchStats.textContent = `${filtered} article${filtered > 1 ? 's' : ''} trouvé${filtered > 1 ? 's' : ''} sur ${total}`;
+            } else {
+                this.searchStats.textContent = `${total} article${total > 1 ? 's' : ''} au total`;
+            }
         }
     }
 
@@ -245,12 +344,16 @@ class ArticleSearch {
     }
 }
 
-// Fonction pour voir les détails d'un article
+// Fonction pour voir les détails d'un article (maintenant via modal)
 function viewArticleDetails(articleId) {
-    // À implémenter - redirection vers la page de détail
-    console.log('Affichage article:', articleId);
-    // Redirection temporaire
-    window.location.href = `/article/${articleId}`;
+    dlog('Affichage article modal:', articleId);
+    if (window.ArticleModal) {
+        window.ArticleModal.open(articleId);
+    } else {
+        // Fallback si le modal n'est pas chargé
+        derror('ArticleModal not loaded, falling back to page navigation');
+        window.location.href = `/article/${articleId}`;
+    }
 }
 
 // Initialisation automatique

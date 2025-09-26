@@ -13,6 +13,8 @@
 .hero-content {
     flex: 1;
     padding: 0 2rem;
+    position: relative;
+    z-index: 10; /* Au-dessus des éléments animés */
 }
 
 .hero-content h2 {
@@ -42,6 +44,8 @@
     justify-content: center;
     align-items: center;
     padding: 0 2rem;
+    position: relative;
+    z-index: 10; /* Au-dessus des éléments animés */
 }
 
 .hero-placeholder {
@@ -50,7 +54,7 @@
     border-radius: var(--border-radius);
     padding: 3rem;
     text-align: center;
-    backdrop-filter: blur(10px);
+    /* backdrop-filter: blur(10px); - Removed for performance */
     transition: var(--transition);
 }
 
@@ -328,5 +332,465 @@
     .article-card {
         margin: 0 auto;
         max-width: 400px;
+    }
+}
+
+/* === EFFECTS NÉON ET ANIMATIONS AVANCÉES === */
+
+/* Effets néon sur les boutons principaux */
+.btn-primary {
+    position: relative;
+    background: linear-gradient(45deg, var(--primary-blue), var(--secondary-blue));
+    border: none;
+    box-shadow: 
+        0 0 10px rgba(59, 130, 246, 0.3),
+        0 0 20px rgba(59, 130, 246, 0.2),
+        0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 0 20px rgba(59, 130, 246, 0.6),
+        0 0 40px rgba(59, 130, 246, 0.4),
+        0 8px 25px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+.btn-primary:hover::before {
+    left: 100%;
+}
+
+/* Effet néon rouge pour certains boutons */
+.btn-secondary {
+    position: relative;
+    background: linear-gradient(45deg, var(--primary-red), #ff6b6b);
+    border: none;
+    box-shadow: 
+        0 0 10px rgba(239, 68, 68, 0.3),
+        0 0 20px rgba(239, 68, 68, 0.2),
+        0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 0 20px rgba(239, 68, 68, 0.6),
+        0 0 40px rgba(239, 68, 68, 0.4),
+        0 8px 25px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+/* Animations des icônes */
+.service-icon i, .logo-icon i {
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));
+}
+
+.service-card:hover .service-icon i {
+    transform: scale(1.2) rotateY(180deg);
+    filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.6));
+}
+
+.logo-icon i {
+    color: var(--primary-blue);
+    text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+}
+
+/* Effet hero city icon */
+.hero-city-icon {
+    font-size: 4rem !important;
+    color: rgba(255, 255, 255, 0.9);
+    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Animations avancées pour les service cards */
+.service-card {
+    position: relative;
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+    box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.1),
+        0 1px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+}
+
+.service-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-blue), var(--primary-red), var(--secondary-blue));
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+    transform-origin: left;
+}
+
+.service-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.15),
+        0 5px 20px rgba(59, 130, 246, 0.2);
+}
+
+.service-card:hover::before {
+    transform: scaleX(1);
+}
+
+/* Amélioration de la hero section avec gradient animé */
+.hero {
+    background: linear-gradient(-45deg, 
+        var(--primary-blue), 
+        var(--secondary-blue), 
+        var(--primary-red), 
+        #6366f1);
+    background-size: 400% 400%;
+    /* Removed heavy gradient animation for performance */
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    /* Removed heavy pattern animation for performance */
+}
+
+/* Éléments animés de background */
+.hero::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    /* Removed heavy orbs animation for performance */
+}
+
+/* Vagues animées */
+.hero-waves {
+    position: absolute;
+    bottom: 0px;
+    left: 0;
+    width: 100%;
+    height: 200px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z' opacity='.25' fill='%23ffffff'/%3E%3Cpath d='M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z' opacity='.5' fill='%23ffffff'/%3E%3Cpath d='M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z' fill='%23ffffff'/%3E%3C/svg%3E") repeat-x;
+    background-size: 1200px 120px;
+    /* Removed heavy wave animation for performance */
+    opacity: 0.3;
+    pointer-events: none; /* Permet aux clics de passer à travers */
+    transform: rotateX(180deg);
+    /* Pour une compatibilité maximale, ajoutez aussi le préfixe webkit */
+    -webkit-transform: rotateX(180deg);
+}
+
+/* Formes géométriques animées */
+.hero-shapes {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none; /* Permet aux clics de passer à travers */
+}
+
+.hero-shape {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+.hero-shape:nth-child(1) {
+    width: 100px;
+    height: 100px;
+    top: 20%;
+    left: -100px;
+    /* Removed sliding animation for performance */
+    animation-delay: 0s;
+}
+
+.hero-shape:nth-child(2) {
+    width: 60px;
+    height: 60px;
+    top: 60%;
+    left: -60px;
+    /* Removed sliding animation for performance */
+    animation-delay: 5s;
+}
+
+.hero-shape:nth-child(3) {
+    width: 80px;
+    height: 80px;
+    top: 40%;
+    left: -80px;
+    /* Removed slideRight animation for performance */
+    animation-delay: 10s;
+}
+
+.hero-shape:nth-child(4) {
+    width: 120px;
+    height: 120px;
+    top: 70%;
+    right: -120px;
+    /* Removed slideLeft animation for performance */
+    animation-delay: 2s;
+}
+
+.hero-shape:nth-child(5) {
+    width: 90px;
+    height: 90px;
+    top: 30%;
+    right: -90px;
+    /* Removed slideLeft animation for performance */
+    animation-delay: 8s;
+}
+
+/* Lignes diagonales animées */
+.hero-lines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none; /* Permet aux clics de passer à travers */
+}
+
+.hero-line {
+    position: absolute;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transform: rotate(-15deg);
+    /* Removed moveLine animation for performance */
+}
+
+.hero-line:nth-child(1) {
+    top: 20%;
+    width: 200px;
+    left: -200px;
+    animation-delay: 0s;
+}
+
+.hero-line:nth-child(2) {
+    top: 50%;
+    width: 150px;
+    left: -150px;
+    animation-delay: 2s;
+}
+
+.hero-line:nth-child(3) {
+    top: 80%;
+    width: 300px;
+    left: -300px;
+    animation-delay: 4s;
+}
+
+/* @keyframes gradientShift - Removed for performance */
+
+/* @keyframes movePattern - Removed for performance */
+
+/* @keyframes floatingOrbs - Removed for performance */
+
+/* @keyframes waveMove - Removed for performance */
+
+/* @keyframes slideRight - Removed for performance */
+
+/* @keyframes slideLeft - Removed for performance */
+
+/* @keyframes moveLine - Removed for performance */
+
+/* Amélioration typographie avec gradients */
+.hero-content h2 {
+    background: linear-gradient(45deg, #ffffff, #e0e7ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.section-title {
+    position: relative;
+    background: linear-gradient(45deg, var(--primary-blue), var(--primary-red));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    margin-bottom: 3rem;
+    font-weight: 700;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-blue), var(--primary-red));
+    border-radius: 2px;
+}
+
+/* === ANIMATIONS D'ENTRÉE AU SCROLL === */
+
+/* État initial des éléments avant animation */
+.animate-on-scroll {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* État animé quand l'élément est visible */
+.animate-on-scroll.animate-in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Animations spéciales pour différents éléments */
+.service-card.animate-on-scroll {
+    transform: translateY(50px) scale(0.9);
+}
+
+.service-card.animate-in {
+    transform: translateY(0) scale(1);
+}
+
+.hero-content.animate-on-scroll {
+    transform: translateX(-50px);
+    opacity: 0;
+}
+
+.hero-content.animate-in {
+    transform: translateX(0);
+    opacity: 1;
+    transition-duration: 1.2s;
+}
+
+.hero-image.animate-on-scroll {
+    transform: translateX(50px) scale(0.8);
+    opacity: 0;
+}
+
+.hero-image.animate-in {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+    transition-duration: 1s;
+    transition-delay: 0.3s;
+}
+
+/* === PARTICULES ANIMÉES === */
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    animation: float-particle 20s linear infinite;
+    pointer-events: none; /* Permet aux clics de passer à travers */
+}
+
+@keyframes float-particle {
+    0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* === AMÉLIORATIONS FOOTER === */
+.footer-section {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s ease;
+}
+
+.footer-section.animate-in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Amélioration des liens sociaux */
+.social-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 25px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    margin: 0.25rem;
+}
+
+.social-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.social-link i {
+    font-size: 1.1rem;
+}
+
+/* === RESPONSIVE ANIMATIONS === */
+@media (max-width: 768px) {
+    .animate-on-scroll {
+        transform: translateY(20px);
+    }
+    
+    .service-card.animate-on-scroll {
+        transform: translateY(30px) scale(0.95);
+    }
+    
+    .hero-content.animate-on-scroll,
+    .hero-image.animate-on-scroll {
+        transform: translateY(30px);
+    }
+    
+    .particle {
+        display: none; /* Désactiver les particules sur mobile pour les performances */
     }
 }

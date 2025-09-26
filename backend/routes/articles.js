@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
 const { authenticateToken, requireAdmin, requireMemberOrRetraite, filterArticlesByRole, logAction } = require('../middleware/auth');
+const { normalizeCategory, CANONICAL_CATEGORIES, expandCategoryForQuery } = require('../config/categories');
+const logger = require('../utils/logger');
 
 // Récupérer tous les articles publics (sans authentification) 
 router.get('/public', async (req, res) => {
@@ -19,7 +21,7 @@ router.get('/public', async (req, res) => {
         
         res.json(articles);
     } catch (error) {
-        console.error('Erreur lors de la récupération des articles publics:', error);
+            logger.error('articles/public fetch failed', error.message);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
@@ -53,7 +55,7 @@ router.get('/', authenticateToken, requireMemberOrRetraite, async (req, res) => 
         
         res.json(articles);
     } catch (error) {
-        console.error('Erreur lors de la récupération des articles:', error);
+            logger.error('articles fetch failed', error.message);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
@@ -86,7 +88,7 @@ router.get('/user-articles', authenticateToken, requireMemberOrRetraite, async (
         const [articles] = await pool.query(sql);
         res.json(articles);
     } catch (error) {
-        console.error('Erreur lors de la récupération des articles utilisateur:', error);
+            logger.error('user-articles fetch failed', error.message);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
@@ -110,7 +112,7 @@ router.get('/featured', async (req, res) => {
         
         res.json(articles);
     } catch (error) {
-        console.error('Erreur lors de la récupération des articles mis en avant:', error);
+            logger.error('featured articles fetch failed', error.message);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
@@ -179,13 +181,24 @@ router.get('/:id', authenticateToken, requireMemberOrRetraite, filterArticlesByR
             }
         }
 
+        // Logger la lecture d'articles importants (featured ou membres seulement)
+        if (article.featured || article.is_member_only) {
+            await logAction(req, 'read_article', 'article', articleId, {
+                title: article.title,
+                category: article.category,
+                isFeatured: article.featured,
+                isMemberOnly: article.is_member_only,
+                readerEmail: req.user?.email || 'anonymous'
+            });
+        }
+
         res.json({ 
             success: true, 
             article 
         });
 
     } catch (error) {
-        console.error('Erreur lors de la récupération de l\'article:', error);
+            logger.error('single article fetch failed', error.message);
         res.status(500).json({ 
             success: false, 
             message: 'Erreur lors de la récupération de l\'article' 
@@ -193,16 +206,18 @@ router.get('/:id', authenticateToken, requireMemberOrRetraite, filterArticlesByR
     }
 });
 
-// Récupérer les articles par catégorie (public, sauf retraites)
-router.get('/category/:category', async (req, res) => {
+// Récupérer un article spécifique (version publique)
+router.get('/public/:id', async (req, res) => {
     try {
-        const { category } = req.params;
-        const validCategories = ['general', 'avantages', 'prestations', 'voyages', 'evenements'];
+        const articleId = parseInt(req.params.id);
         
-        if (!validCategories.includes(category)) {
-            return res.status(400).json({ error: 'Catégorie invalide ou accès non autorisé' });
+        if (isNaN(articleId)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'ID d\'article invalide' 
+            });
         }
-        
+
         const [articles] = await pool.query(`
             SELECT 
                 a.*,
@@ -210,76 +225,88 @@ router.get('/category/:category', async (req, res) => {
                 u.lastname
             FROM articles a
             LEFT JOIN users u ON a.author_id = u.id
-            WHERE a.category = ? AND a.status = 'published'
-            ORDER BY a.featured DESC, a.created_at DESC
-        `, [category]);
+            WHERE a.id = ? AND a.status = 'published' AND (a.visibility IS NULL OR a.visibility = 'public')
+        `, [articleId]);
         
+        if (articles.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Article non trouvé ou non accessible' 
+            });
+        }
+
+        res.json({ 
+            success: true, 
+            article: articles[0] 
+        });
+
+    } catch (error) {
+        logger.error('public single article fetch failed', error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de la récupération de l\'article' 
+        });
+    }
+});
+
+// Liste des catégories (public)
+router.get('/categories', (req, res) => {
+    res.json({ categories: CANONICAL_CATEGORIES });
+});
+
+// Récupérer les articles par catégorie (public) avec normalisation/alias
+router.get('/category/:category', async (req, res) => {
+    try {
+        const raw = req.params.category;
+        const list = expandCategoryForQuery(raw);
+        if (!list.length) return res.status(400).json({ error: 'Catégorie invalide' });
+        let visibilityFilter = '';
+        if (list.includes('retraites')) {
+            visibilityFilter = ' AND (a.visibility = \'public\' OR a.visibility IS NULL)';
+        }
+        const placeholders = list.map(() => '?').join(',');
+        const [articles] = await pool.query(`
+            SELECT a.*, u.firstname, u.lastname
+            FROM articles a
+            LEFT JOIN users u ON a.author_id = u.id
+            WHERE a.status = 'published' AND a.category IN (${placeholders})${visibilityFilter}
+            ORDER BY a.featured DESC, a.created_at DESC
+        `, list);
         res.json(articles);
     } catch (error) {
-        console.error('Erreur lors de la récupération des articles par catégorie:', error);
+        logger.error('category fetch failed', error.message);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
 
 // Récupérer les articles par catégorie avec authentification (pour accéder aux retraites)
-router.get('/user-category/:category', authenticateToken, requireMemberOrRetraite, filterArticlesByRole, async (req, res) => {
+router.get('/user-category/:category', authenticateToken, requireMemberOrRetraite, async (req, res) => {
     try {
-        const { category } = req.params;
-        const validCategories = ['general', 'avantages', 'prestations', 'voyages', 'retraites', 'evenements'];
-        
-        if (!validCategories.includes(category)) {
-            return res.status(400).json({ error: 'Catégorie invalide' });
-        }
-        
-        // Vérifier l'accès selon le rôle
-        if (category === 'retraites' && req.user.role !== 'retraite' && req.user.role !== 'admin') {
+        const raw = req.params.category;
+        const list = expandCategoryForQuery(raw);
+        if (!list.length) return res.status(400).json({ error: 'Catégorie invalide' });
+        // Gestion des restrictions retraites
+        if (list.includes('retraites') && req.user.role !== 'retraite' && req.user.role !== 'admin') {
             return res.status(403).json({ error: 'Accès non autorisé à cette catégorie' });
         }
-        
-        if (category !== 'retraites' && req.user.role === 'retraite') {
+        if (!list.includes('retraites') && req.user.role === 'retraite') {
             return res.status(403).json({ error: 'Accès limité aux articles retraités' });
         }
-        
+        let visibilityFilter = '';
+        if (list.includes('retraites') && req.user.role === 'retraite') {
+            visibilityFilter = ' AND (a.visibility = \'public\' OR a.visibility = \'retraite\' OR a.visibility = \'adherent_retraite\' OR a.visibility IS NULL)';
+        }
+        const placeholders = list.map(() => '?').join(',');
         const [articles] = await pool.query(`
-            SELECT 
-                a.*,
-                u.firstname,
-                u.lastname
+            SELECT a.*, u.firstname, u.lastname
             FROM articles a
             LEFT JOIN users u ON a.author_id = u.id
-            WHERE a.category = ? AND a.status = 'published'
+            WHERE a.status = 'published' AND a.category IN (${placeholders})${visibilityFilter}
             ORDER BY a.featured DESC, a.created_at DESC
-        `, [category]);
-        
+        `, list);
         res.json(articles);
     } catch (error) {
-        console.error('Erreur lors de la récupération des articles par catégorie:', error);
-        res.status(500).json({ error: 'Erreur serveur' });
-    }
-});
-
-// Récupérer un article spécifique
-router.get('/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        
-        const [articles] = await pool.query(`
-            SELECT 
-                a.*,
-                u.firstname,
-                u.lastname
-            FROM articles a
-            LEFT JOIN users u ON a.author_id = u.id
-            WHERE a.id = ?
-        `, [id]);
-        
-        if (articles.length === 0) {
-            return res.status(404).json({ error: 'Article non trouvé' });
-        }
-        
-        res.json(articles[0]);
-    } catch (error) {
-        console.error('Erreur lors de la récupération de l\'article:', error);
+        logger.error('user-category fetch failed', error.message);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
@@ -302,13 +329,10 @@ router.post('/', authenticateToken, requireMemberOrRetraite, async (req, res) =>
             return res.status(400).json({ error: 'Le titre et le contenu sont requis' });
         }
         
-        const validCategories = ['general', 'prestations', 'avantages', 'voyages', 'retraites', 'evenements'];
-        const validStatuses = ['draft', 'published'];
+    const validStatuses = ['draft', 'published'];
         const validVisibilities = ['public', 'adherent', 'retraite', 'adherent_retraite'];
-        
-        if (!validCategories.includes(category)) {
-            return res.status(400).json({ error: 'Catégorie invalide' });
-        }
+        const normalizedCategory = normalizeCategory(category);
+        if (!normalizedCategory) return res.status(400).json({ error: 'Catégorie invalide' });
         
         if (!validStatuses.includes(status)) {
             return res.status(400).json({ error: 'Statut invalide' });
@@ -325,9 +349,9 @@ router.post('/', authenticateToken, requireMemberOrRetraite, async (req, res) =>
             title, 
             content, 
             excerpt, 
-            category, 
+            normalizedCategory, 
             status, 
-            featured, 
+            featured ? 1 : 0, 
             image_url, 
             visibility,
             req.user.id,
@@ -335,14 +359,18 @@ router.post('/', authenticateToken, requireMemberOrRetraite, async (req, res) =>
         ]);
         
         // Logger l'action
-        await logAction(req, 'create_article', 'article', result.insertId);
+        await logAction(req, 'create_article', 'article', result.insertId, {
+            title: title,
+            category: category,
+            status: status
+        });
         
         res.status(201).json({
             message: 'Article créé avec succès',
             articleId: result.insertId
         });
     } catch (error) {
-        console.error('Erreur lors de la création de l\'article:', error);
+        logger.error('article create failed', error.message);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
@@ -383,10 +411,9 @@ router.put('/:id', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Le contenu ne peut pas être vide' });
         }
         
-        const validCategories = ['general', 'avantages', 'voyages', 'retraites', 'evenements'];
-        if (category && !validCategories.includes(category)) {
-            return res.status(400).json({ error: 'Catégorie invalide' });
-        }
+    if (category && !normalizeCategory(category)) {
+        return res.status(400).json({ error: 'Catégorie invalide' });
+    }
         
         const validStatuses = ['draft', 'published'];
         if (status && !validStatuses.includes(status)) {
@@ -427,7 +454,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
         }
         if (featured !== undefined) {
             updates.push('featured = ?');
-            values.push(featured);
+            values.push(featured ? 1 : 0);
         }
         
         if (updates.length === 0) {
@@ -444,11 +471,14 @@ router.put('/:id', authenticateToken, async (req, res) => {
         `, values);
         
         // Logger l'action
-        await logAction(req, 'update_article', 'article', id);
+        await logAction(req, 'update_article', 'article', id, {
+            fieldsUpdated: updates.length - 1, // -1 pour exclure updated_at
+            updatedBy: req.user.email
+        });
         
         res.json({ message: 'Article mis à jour avec succès' });
     } catch (error) {
-        console.error('Erreur lors de la mise à jour de l\'article:', error);
+        logger.error('article update failed', error.message);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
@@ -511,7 +541,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         
         res.json({ message: 'Article supprimé avec succès' });
     } catch (error) {
-        console.error('Erreur lors de la suppression de l\'article:', error);
+            logger.error('article delete failed', error.message);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });

@@ -2,11 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 require('dotenv').config();
 
 const { testConnection } = require('./config/database');
-const { logVisit } = require('./middleware/logger');
 
 // Import des routes
 const authRoutes = require('./routes/auth');
@@ -45,35 +45,15 @@ const limiter = rateLimit({
     message: 'Trop de requêtes depuis cette IP, réessayez plus tard.'
 });
 
-//  Rate limiting plus strict pour l'authentification
-const authLimiter = rateLimit({
-    windowMs: 5 * 60 * 1000, // 5 minutes au lieu de 15
-    max: process.env.NODE_ENV === 'production' ? 5 : 20, // 20 tentatives en développement, 5 en production
-    message: JSON.stringify({ 
-        error: 'Trop de tentatives de connexion, réessayez plus tard.',
-        retryAfter: '5 minutes'
-    }),
-    standardHeaders: true,
-    legacyHeaders: false
-});
-
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
 
 // Trust proxy pour obtenir les vraies IP
 app.set('trust proxy', 1);
 
-// Logger les visites (sauf pour les routes API)
-app.use((req, res, next) => {
-    if (!req.originalUrl.startsWith('/api/')) {
-        logVisit(req, res, () => {});
-    }
-    next();
-});
-
 // Application des middlewares
-app.use('/api/auth', authLimiter);
 app.use('/api', limiter);
 
 // Routes API
@@ -108,6 +88,10 @@ app.get('/avantages', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/avantages.html'));
 });
 
+app.get('/prestations', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/avantages.html'));
+});
+
 app.get('/voyages', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/voyages.html'));
 });
@@ -120,12 +104,12 @@ app.get('/evenements', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/evenements.html'));
 });
 
-app.get('/articles', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/articles.html'));
+app.get('/calendrier', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/calendrier.html'));
 });
 
-app.get('/mes-evenements', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/mes-evenements.html'));
+app.get('/articles', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/articles.html'));
 });
 
 app.get('/contact', (req, res) => {

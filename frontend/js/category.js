@@ -10,8 +10,65 @@ async function initCategoryPage() {
         return;
     }
 
-    await loadCategoryArticles();
-    updateMemberAccess();
+    // Attendre que authManager soit initialisé
+    await new Promise(resolve => {
+        if (window.authManager) {
+            resolve();
+        } else {
+            setTimeout(resolve, 100);
+        }
+    });
+
+    await checkAuthAndLoadCategoryArticles();
+}
+
+async function checkAuthAndLoadCategoryArticles() {
+    const articlesGrid = document.getElementById('articlesGrid');
+    const memberNotice = document.getElementById('memberNotice');
+    const articlesSection = document.querySelector('.articles-section');
+    
+    if (!articlesGrid) return;
+    
+    try {
+        // Vérifier l'authentification
+        const isAuthenticated = await window.authManager.verifyAuth();
+        const userInfo = window.authManager.getCurrentUser();
+        const category = window.categoryConfig.category;
+        
+        dlog('🔐 Category auth check - Category:', category, 'Authenticated:', isAuthenticated, 'User:', userInfo);
+        
+        // Si pas connecté ou pas membre -> Afficher seulement le message d'accès restreint
+        if (!isAuthenticated || !userInfo || !['admin', 'member', 'retraite'].includes(userInfo.role)) {
+            dlog('❌ Access denied for category:', category, '- showing member notice only');
+            
+            // Afficher le message d'accès restreint
+            if (memberNotice) memberNotice.style.display = 'block';
+            
+            // Cacher la section articles
+            if (articlesSection) articlesSection.style.display = 'none';
+            
+            return;
+        }
+        
+        // Si connecté et membre -> Cacher le message et charger les articles
+        dlog('✅ Access granted for category:', category, '- loading articles');
+        
+        // Cacher le message d'accès restreint
+        if (memberNotice) memberNotice.style.display = 'none';
+        
+        // Afficher la section articles
+        if (articlesSection) articlesSection.style.display = 'block';
+        
+        // Charger les articles
+        await loadCategoryArticles();
+        
+    } catch (error) {
+        derror('💥 Erreur vérification auth catégorie:', error);
+        
+        // En cas d'erreur, afficher le message d'accès restreint par sécurité
+        if (memberNotice) memberNotice.style.display = 'block';
+        if (articlesSection) articlesSection.style.display = 'none';
+    }
 }
 
 // Chargement des articles de la catégorie
@@ -26,20 +83,11 @@ async function loadCategoryArticles() {
     try {
         utils.showLoading(articlesGrid, true);
 
-        // Pour la catégorie retraites, vérifier l'authentification
-        if (category === 'retraites') {
-            if (!window.authManager || !window.authManager.isAuthenticated()) {
-                // Rediriger vers la connexion si pas authentifié
-                window.location.href = '/connexion?redirect=' + encodeURIComponent(window.location.pathname);
-                return;
-            }
-        }
-
-        // Utiliser la route appropriée selon la catégorie
+        // Pour la catégorie retraites, essayer d'abord la route publique
         let apiUrl = `/api/articles/category/${category}`;
         const headers = {};
         
-        // Pour les catégories restreintes, utiliser la route authentifiée si connecté
+        // Si connecté, utiliser la route authentifiée pour les retraites
         if (window.authManager && window.authManager.isAuthenticated() && category === 'retraites') {
             apiUrl = `/api/articles/user-category/${category}`;
             headers['Authorization'] = `Bearer ${window.authManager.token}`;
@@ -47,25 +95,50 @@ async function loadCategoryArticles() {
         
         console.log('🔍 Chargement des articles pour catégorie:', category, 'URL:', apiUrl);
         
-        const response = await fetch(apiUrl, { headers });
+        const response = await fetch(apiUrl, { 
+            headers,
+            credentials: 'include' // Important pour les cookies refresh
+        });
         
         if (!response.ok) {
             console.error('❌ Erreur HTTP:', response.status, response.statusText);
             
             if (response.status === 403) {
-                // Accès refusé
+                // Accès refusé - afficher un message au lieu de rediriger
                 articlesGrid.innerHTML = `
                     <div class="access-denied">
                         <h3>🔒 Accès restreint</h3>
-                        <p>Vous n'avez pas l'autorisation d'accéder à cette section.</p>
-                        ${category === 'retraites' ? '<p>Cette section est réservée aux membres retraités.</p>' : ''}
+                        <p>Cette section nécessite des privilèges particuliers.</p>
+                        ${category === 'retraites' ? '<p>Les articles retraites sont réservés aux membres retraités. <a href="/connexion">Se connecter</a> avec un compte retraité pour y accéder.</p>' : ''}
                     </div>
                 `;
                 return;
             } else if (response.status === 401) {
-                // Non authentifié
-                window.location.href = '/connexion?redirect=' + encodeURIComponent(window.location.pathname);
-                return;
+                // Non authentifié - pour les retraites, essayer la route publique d'abord
+                if (category === 'retraites') {
+                    console.log('🔄 Tentative de récupération publique des articles retraites');
+                    const publicResponse = await fetch(`/api/articles/category/${category}`, {
+                        credentials: 'include'
+                    });
+                    if (publicResponse.ok) {
+                        const articles = await publicResponse.json();
+                        displayArticles(articles, articlesGrid, category);
+                        return;
+                    }
+                    // Si même la route publique échoue, afficher un message
+                    articlesGrid.innerHTML = `
+                        <div class="access-denied">
+                            <h3>📝 Articles Retraites</h3>
+                            <p>Connectez-vous avec un compte retraité pour accéder au contenu complet des articles retraites.</p>
+                            <a href="/connexion?redirect=${encodeURIComponent(window.location.pathname)}" class="btn btn-primary">Se connecter</a>
+                        </div>
+                    `;
+                    return;
+                } else {
+                    // Pour les autres catégories, rediriger vers la connexion
+                    window.location.href = '/connexion?redirect=' + encodeURIComponent(window.location.pathname);
+                    return;
+                }
             } else {
                 // Autres erreurs
                 const errorText = await response.text();
@@ -78,13 +151,7 @@ async function loadCategoryArticles() {
         console.log('📄 Articles reçus:', articles.length);
 
         if (articles.length === 0) {
-            articlesGrid.innerHTML = `
-                <div class="no-articles-content">
-                    <div class="no-articles-icon">📄</div>
-                    <h3>Aucun article dans cette catégorie</h3>
-                    <p>Il n'y a actuellement aucun article publié dans la catégorie ${category}.</p>
-                </div>
-            `;
+            articlesGrid.innerHTML = `<div class="loading" style="display: none;"></div>`;
             if (noArticles) noArticles.style.display = 'block';
             return;
         }

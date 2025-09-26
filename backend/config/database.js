@@ -56,7 +56,7 @@ async function initDatabase() {
                 title VARCHAR(255) NOT NULL,
                 content TEXT NOT NULL,
                 excerpt TEXT,
-                category ENUM('general', 'avantages', 'voyages', 'retraites', 'evenements') NOT NULL,
+                category ENUM('general', 'prestations', 'avantages', 'voyages', 'retraites', 'evenements') NOT NULL,
                 author_id INT NOT NULL,
                 status ENUM('draft', 'published', 'archived') DEFAULT 'draft',
                 featured BOOLEAN DEFAULT FALSE,

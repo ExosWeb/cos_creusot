@@ -3,16 +3,50 @@ document.addEventListener('DOMContentLoaded', function() {
     initLoginPage();
 });
 
-function initLoginPage() {
+async function initLoginPage() {
+    console.log('🚀 Initialisation page de connexion');
+    // Attendre que l'AuthManager soit initialisé
+    while (!window.authManager || !window.authManager.isReady) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+    }
+
+    console.log('✅ AuthManager prêt');
+
     // Rediriger si déjà connecté
     if (window.authManager.isAuthenticated()) {
+        console.log('✅ Utilisateur déjà connecté, redirection vers accueil');
         window.location.href = '/';
         return;
     }
 
     const loginForm = document.getElementById('loginForm');
+    console.log('🔍 Formulaire trouvé:', !!loginForm);
+    
     if (loginForm) {
+        // Empêcher toute soumission native
+        loginForm.setAttribute('novalidate', 'novalidate');
         loginForm.addEventListener('submit', handleLogin);
+        
+        // Touche Entrée dans un champ => on gère en JS
+        loginForm.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleLogin(e);
+            }
+        });
+
+        // Listener explicite sur le bouton
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) {
+            submitBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                handleLogin(e);
+            });
+        }
+
+        console.log('✅ Listeners attachés (submit, keydown, click)');
+    } else {
+        console.error('❌ Formulaire loginForm non trouvé !');
     }
 
     // Focus automatique sur le premier champ
@@ -23,13 +57,22 @@ function initLoginPage() {
 }
 
 async function handleLogin(e) {
-    e.preventDefault();
+    console.log('🔐 handleLogin appelé');
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
 
-    const form = e.target;
+    // Récupérer de façon robuste le formulaire et le bouton
+    const form = (e && e.target && e.target.tagName === 'FORM')
+        ? e.target
+        : document.getElementById('loginForm');
     const submitBtn = document.getElementById('submitBtn');
     const alertMessage = document.getElementById('alertMessage');
 
     // Récupération des données du formulaire
+    if (!form) {
+        console.error('❌ Formulaire introuvable dans handleLogin');
+        return;
+    }
+
     const formData = new FormData(form);
     const email = formData.get('email');
     const password = formData.get('password');
@@ -46,8 +89,16 @@ async function handleLogin(e) {
     submitBtn.textContent = '';
 
     try {
+        if (!window.authManager) {
+            console.error('❌ AuthManager non disponible');
+            showAlert('Erreur interne: AuthManager indisponible', 'error');
+            return;
+        }
+
+        console.log('🔐 Tentative de connexion', { email });
         // Tentative de connexion
         const result = await window.authManager.login(email, password);
+        console.log('📊 Résultat connexion:', result);
 
         if (result.success) {
             // Connexion réussie
@@ -59,10 +110,26 @@ async function handleLogin(e) {
                 localStorage.setItem('last_email', email);
             }
 
-            // Redirection après 1.5 secondes
+            // Vérifier que l'authentification est bien établie avant redirection
+            console.log('🔍 Vérification état auth avant redirection:', {
+                isAuth: window.authManager.isAuthenticated(),
+                user: window.authManager.getCurrentUser(),
+                token: !!window.authManager.token
+            });
+
+            // Redirection après vérification
             setTimeout(() => {
+                // Double vérification avant redirection
+                if (!window.authManager.isAuthenticated()) {
+                    console.error('❌ Utilisateur non authentifié lors de la redirection !');
+                    showAlert('Erreur d\'authentification. Veuillez réessayer.', 'error');
+                    return;
+                }
+
                 const urlParams = new URLSearchParams(window.location.search);
                 const redirect = urlParams.get('redirect');
+                
+                console.log('🚀 Redirection vers:', redirect || (window.authManager.isAdmin() ? '/admin' : '/'));
                 
                 if (redirect && redirect.startsWith('/')) {
                     window.location.href = redirect;
@@ -71,7 +138,7 @@ async function handleLogin(e) {
                 } else {
                     window.location.href = '/';
                 }
-            }, 1500);
+            }, 1000); // Réduire le délai à 1 seconde
 
         } else {
             // Erreur de connexion

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendrier des Événements - COS Creusot</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/calendar-public.css">
+    <link rel="stylesheet" href="css/animations-optimized.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon"><i class="fas fa-landmark"></i></div>
+                    <div class="logo-text">
+                        <h1>COS Creusot</h1>
+                        <span>Comité des Œuvres Sociales</span>
+                    </div>
+                </div>
+
+                <nav class="main-nav">
+                    <a href="/index.html">Accueil</a>
+                    <a href="/avantages.html">Prestations</a>
+                    <a href="/voyages.html">Voyages</a>
+                    <a href="/calendrier.html" class="active">Calendrier</a>
+                    <a href="/retraites.html">Retraités</a>
+                    <a href="/contact.html">Contact</a>
+                </nav>
+
+                <div class="auth-section" id="authSection">
+                    <div class="auth-loading">
+                        <div class="loading-spinner"></div>
+                    </div>
+                    <div class="auth-buttons" style="display: none;">
+                        <a href="/login.html" class="btn btn-outline">Connexion</a>
+                        <a href="/register.html" class="btn btn-primary">Inscription</a>
+                    </div>
+                    <div class="user-menu" style="display: none;" id="userMenu">
+                        <div class="user-info" id="userInfo">
+                            <div class="user-details">
+                                <div class="user-avatar">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="user-name">
+                                    <span id="userName">Utilisateur</span>
+                                    <small id="userRole">Membre</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="user-dropdown" id="userDropdown">
+                            <div class="dropdown-menu">
+                                <a href="/mes-evenements.html" class="dropdown-item">
+                                    <i class="fas fa-calendar-check"></i> Mes événements
+                                </a>
+                                <button class="btn-admin" id="adminBtn" style="display: none;">
+                                    <a href="/admin">Administration</a>
+                                </button>
+                                <button class="btn-logout" id="logoutBtn">Déconnexion</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Calendar Header -->
+    <section class="calendar-header">
+        <div class="container">
+            <div class="calendar-title fadeInUp">
+                <h1><i class="fas fa-calendar-alt"></i> Calendrier des Événements</h1>
+                <p>Découvrez tous les événements organisés par le COS</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Calendar Controls -->
+    <section class="calendar-controls">
+        <div class="container">
+            <div class="controls-wrapper fadeInUp" style="animation-delay: 0.1s;">
+                <div class="view-controls">
+                    <button class="view-btn active" data-view="month">
+                        <i class="fas fa-calendar"></i> Mois
+                    </button>
+                    <button class="view-btn" data-view="week">
+                        <i class="fas fa-calendar-week"></i> Semaine
+                    </button>
+                    <button class="view-btn" data-view="list">
+                        <i class="fas fa-list"></i> Liste
+                    </button>
+                </div>
+
+                <div class="navigation-controls">
+                    <button class="nav-btn" id="prevBtn" title="Mois précédent">
+                        <i class="fas fa-chevron-left"></i>
+                        <span class="icon-fallback">‹</span>
+                    </button>
+                    <div class="current-period">
+                        <h2 id="currentPeriod">Mars 2024</h2>
+                    </div>
+                    <button class="nav-btn" id="nextBtn" title="Mois suivant">
+                        <i class="fas fa-chevron-right"></i>
+                        <span class="icon-fallback">›</span>
+                    </button>
+                    <button class="today-btn" id="todayBtn">
+                        Aujourd'hui
+                    </button>
+                </div>
+
+                <div class="calendar-filters">
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="">Toutes les catégories</option>
+                        <option value="voyages">Voyages</option>
+                        <option value="retraites">Retraités</option>
+                        <option value="evenements">Événements</option>
+                        <option value="general">Général</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Calendar Content -->
+    <section class="calendar-content">
+        <div class="container">
+            <!-- Month View -->
+            <div id="monthView" class="calendar-view active fadeInUp" style="animation-delay: 0.2s;">
+                <div class="calendar-grid">
+                    <div class="calendar-header-row">
+                        <div class="calendar-day-header">Lun</div>
+                        <div class="calendar-day-header">Mar</div>
+                        <div class="calendar-day-header">Mer</div>
+                        <div class="calendar-day-header">Jeu</div>
+                        <div class="calendar-day-header">Ven</div>
+                        <div class="calendar-day-header">Sam</div>
+                        <div class="calendar-day-header">Dim</div>
+                    </div>
+                    <div id="calendarBody" class="calendar-body">
+                        <!-- Calendar days will be generated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Week View -->
+            <div id="weekView" class="calendar-view">
+                <div class="week-grid">
+                    <div class="time-column">
+                        <div class="time-header"></div>
+                        <div class="time-slots" id="timeSlots">
+                            <!-- Time slots will be generated here -->
+                        </div>
+                    </div>
+                    <div class="week-days" id="weekDays">
+                        <!-- Week days will be generated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- List View -->
+            <div id="listView" class="calendar-view">
+                <div class="events-list" id="eventsList">
+                    <!-- Events list will be generated here -->
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="calendarLoading" class="calendar-loading">
+                <div class="loading-spinner"></div>
+                <p>Chargement des événements...</p>
+            </div>
+
+            <!-- No Events State -->
+            <div id="noEventsMessage" class="no-events" style="display: none;">
+                <i class="fas fa-calendar-times"></i>
+                <h3>Aucun événement trouvé</h3>
+                <p>Il n'y a pas d'événements pour cette période.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Event Details Modal -->
+    <div id="eventModal" class="event-modal">
+        <div class="event-modal-content">
+            <div class="event-modal-header">
+                <button class="event-modal-close">&times;</button>
+                <h2 id="eventModalTitle">Titre de l'événement</h2>
+                <div class="event-modal-meta">
+                    <span id="eventModalCategory" class="event-category"></span>
+                </div>
+            </div>
+            <div class="event-modal-body">
+                <div class="event-details-grid">
+                    <div class="event-detail">
+                        <i class="fas fa-calendar"></i>
+                        <div>
+                            <strong>Date</strong>
+                            <span id="eventModalDate">-</span>
+                        </div>
+                    </div>
+                    <div class="event-detail">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <strong>Heure</strong>
+                            <span id="eventModalTime">-</span>
+                        </div>
+                    </div>
+                    <div class="event-detail">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <strong>Lieu</strong>
+                            <span id="eventModalLocation">-</span>
+                        </div>
+                    </div>
+                    <div class="event-detail">
+                        <i class="fas fa-users"></i>
+                        <div>
+                            <strong>Participants</strong>
+                            <span id="eventModalParticipants">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="event-description">
+                    <h4>Description</h4>
+                    <p id="eventModalDescription">-</p>
+                </div>
+                <div class="event-actions">
+                    <button id="eventRegisterBtn" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> S'inscrire
+                    </button>
+                    <button id="eventUnregisterBtn" class="btn btn-outline" style="display: none;">
+                        <i class="fas fa-user-minus"></i> Se désinscrire
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>COS Creusot</h3>
+                <p>Comité des Œuvres Sociales - Votre partenaire depuis 1985</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4>Navigation</h4>
+                <ul>
+                    <li><a href="index.html">Accueil</a></li>
+                    <li><a href="avantages.html">Prestations</a></li>
+                    <li><a href="voyages.html">Voyages</a></li>
+                    <li><a href="calendrier.html">Calendrier</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Contact</h4>
+                <div class="contact-info">
+                    <p><i class="fas fa-map-marker-alt"></i> 123 Rue du Sport, Le Creusot</p>
+                    <p><i class="fas fa-phone"></i> 03 85 XX XX XX</p>
+                    <p><i class="fas fa-envelope"></i> contact@cos-creusot.fr</p>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 COS Creusot. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/debug.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/calendar.js"></script>
+    
+    <!-- Initialize auth for navbar and check icons -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize auth manager for navbar
+            if (typeof authManager !== 'undefined') {
+                authManager.checkAuthStatus();
+            }
+            
+            // Check if Font Awesome loaded correctly
+            setTimeout(() => {
+                const testIcon = document.createElement('i');
+                testIcon.className = 'fas fa-chevron-left';
+                testIcon.style.visibility = 'hidden';
+                testIcon.style.position = 'absolute';
+                document.body.appendChild(testIcon);
+                
+                const computed = window.getComputedStyle(testIcon);
+                const fontFamily = computed.getPropertyValue('font-family');
+                
+                if (fontFamily.includes('Font Awesome')) {
+                    // Font Awesome loaded correctly
+                    document.querySelectorAll('.nav-btn').forEach(btn => {
+                        btn.setAttribute('data-icon-loaded', 'true');
+                    });
+                } else {
+                    // Font Awesome didn't load, show fallbacks
+                    dlog('⚠️ Font Awesome not loaded, using fallback icons');
+                }
+                
+                document.body.removeChild(testIcon);
+            }, 100);
+        });
+    </script>
+</body>
+</html>

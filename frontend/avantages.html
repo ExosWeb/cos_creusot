@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/category.css">
     <link rel="stylesheet" href="css/search.css">
+    <link rel="stylesheet" href="css/article-modal.css">
+    <link rel="stylesheet" href="css/animations-optimized.css">
 </head>
 <body>
     <!-- Header -->
@@ -28,6 +30,7 @@
                         <li><a href="/voyages">Voyages</a></li>
                         <li><a href="/retraites">Retraites</a></li>
                         <li><a href="/evenements">Événements</a></li>
+                        <li><a href="/calendrier">Calendrier</a></li>
                         <li><a href="/contact">Contact</a></li>
                     </ul>
                 </nav>
@@ -147,16 +150,115 @@
         </div>
     </footer>
 
+    <script src="js/debug.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/categories.js"></script>
+    <script src="js/article-modal.js"></script>
     <script src="js/search.js"></script>
-    <script src="js/category.js"></script>
     <script>
-        // Configuration spécifique pour les prestations
+        // Configuration simplifiée pour prestations
         window.categoryConfig = {
-            category: 'prestations',
+            category: 'prestations', // Toujours prestations (canonique)
             title: 'Prestations',
             icon: '🎁'
         };
+        
+        // Load articles when page is ready
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Attendre que authManager soit initialisé
+            await new Promise(resolve => {
+                if (window.authManager) {
+                    resolve();
+                } else {
+                    setTimeout(resolve, 100);
+                }
+            });
+            
+            await checkAuthAndLoadArticles();
+        });
+        
+        async function checkAuthAndLoadArticles() {
+            const articlesGrid = document.getElementById('articlesGrid');
+            const noArticles = document.getElementById('noArticles');
+            const memberNotice = document.getElementById('memberNotice');
+            const articlesSection = document.querySelector('.articles-section');
+            
+            if (!articlesGrid) return;
+            
+            try {
+                // Vérifier l'authentification
+                const isAuthenticated = await window.authManager.verifyAuth();
+                const userInfo = window.authManager.getCurrentUser();
+                
+                dlog('🔐 Auth check - Authenticated:', isAuthenticated, 'User:', userInfo);
+                
+                // Si pas connecté ou pas membre -> Afficher seulement le message d'accès restreint
+                if (!isAuthenticated || !userInfo || !['admin', 'member', 'retraite'].includes(userInfo.role)) {
+                    dlog('❌ Access denied - showing member notice only');
+                    
+                    // Afficher le message d'accès restreint
+                    if (memberNotice) memberNotice.style.display = 'block';
+                    
+                    // Cacher la section articles
+                    if (articlesSection) articlesSection.style.display = 'none';
+                    
+                    return;
+                }
+                
+                // Si connecté et membre -> Cacher le message et charger les articles
+                dlog('✅ Access granted - loading articles');
+                
+                // Cacher le message d'accès restreint
+                if (memberNotice) memberNotice.style.display = 'none';
+                
+                // Afficher la section articles
+                if (articlesSection) articlesSection.style.display = 'block';
+                
+                // Charger les articles
+                articlesGrid.innerHTML = '<div class="loading">Chargement des prestations...</div>';
+                
+                const articles = await window.CategoriesUtils.fetchCategoryArticles('prestations');
+                
+                if (articles.length === 0) {
+                    articlesGrid.innerHTML = '<div class="loading" style="display: none;"></div>';
+                    if (noArticles) noArticles.style.display = 'block';
+                    return;
+                }
+                
+                articlesGrid.style.display = 'grid';
+                if (noArticles) noArticles.style.display = 'none';
+                
+                // Create article cards
+                articlesGrid.innerHTML = articles.map(article => `
+                    <article class="article-card ${article.featured ? 'featured' : ''}" data-article-id="${article.id}">
+                        <div class="article-image">
+                            ${article.image_url ? 
+                                `<img src="${article.image_url}" alt="${article.title}" loading="lazy">` :
+                                '<div class="article-placeholder">🎁</div>'
+                            }
+                        </div>
+                        <div class="article-content">
+                            <div class="article-meta">
+                                <span class="article-category prestations">Prestations</span>
+                                <span class="article-date">${new Date(article.created_at).toLocaleDateString('fr-FR')}</span>
+                            </div>
+                            <h3 class="article-title">${article.title}</h3>
+                            <p class="article-excerpt">${article.excerpt || article.content.substring(0, 150) + '...'}</p>
+                            <div class="article-actions">
+                                <button onclick="openArticle(${article.id})" class="btn btn-primary">Lire plus</button>
+                            </div>
+                        </div>
+                    </article>
+                `).join('');
+                
+            } catch (error) {
+                derror('💥 Erreur chargement prestations:', error);
+                
+                // En cas d'erreur, afficher le message d'accès restreint par sécurité
+                if (memberNotice) memberNotice.style.display = 'block';
+                if (articlesSection) articlesSection.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>

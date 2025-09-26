@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug API Prestations</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 3px; }
+        .error { background: #ffe6e6; color: #d00; }
+        .success { background: #e6ffe6; color: #060; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Debug API Prestations</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: API Categories</h3>
+        <button onclick="testCategories()">Tester /api/articles/categories</button>
+        <div id="categories-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 2: API Prestations (category)</h3>
+        <button onclick="testPrestations()">Tester /api/articles/category/prestations</button>
+        <div id="prestations-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 3: API Avantages (legacy alias)</h3>
+        <button onclick="testAvantages()">Tester /api/articles/category/avantages</button>
+        <div id="avantages-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 4: API Tous articles</h3>
+        <button onclick="testAllArticles()">Tester /api/articles/public</button>
+        <div id="all-result" class="result"></div>
+    </div>
+
+    <script>
+        async function testAPI(url, resultId) {
+            const resultDiv = document.getElementById(resultId);
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = '⏳ Test en cours...';
+            
+            try {
+                console.log('🧪 Test API:', url);
+                const response = await fetch(url, {
+                    credentials: 'include'
+                });
+                
+                console.log('📡 Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log('📄 Data received:', data);
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <strong>✅ Succès (${response.status})</strong><br>
+                    Données: <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                console.error('❌ Erreur:', error);
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ Erreur</strong><br>
+                    Message: ${error.message}
+                `;
+            }
+        }
+        
+        function testCategories() {
+            testAPI('/api/articles/categories', 'categories-result');
+        }
+        
+        function testPrestations() {
+            testAPI('/api/articles/category/prestations', 'prestations-result');
+        }
+        
+        function testAvantages() {
+            testAPI('/api/articles/category/avantages', 'avantages-result');
+        }
+        
+        function testAllArticles() {
+            testAPI('/api/articles/public', 'all-result');
+        }
+        
+        // Auto-test au chargement
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('🔧 Page de debug chargée');
+            testAllArticles();
+        });
+    </script>
+</body>
+</html>

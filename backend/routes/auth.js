@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { pool } = require('../config/database');
@@ -73,6 +74,32 @@ router.post('/register', registerValidation, async (req, res) => {
     }
 });
 
+// Helpers tokens
+function signAccess(payload){
+    const jwtSecret = process.env.JWT_SECRET || 'cos-creusot-secret-key-default-2024';
+    return jwt.sign(payload, jwtSecret, { expiresIn: process.env.JWT_EXPIRES_IN || '30m' });
+}
+function signRefresh(payload){
+    const refreshSecret = process.env.REFRESH_SECRET || (process.env.JWT_SECRET || 'cos-creusot-secret-key-default-2024') + '_refresh';
+    return jwt.sign(payload, refreshSecret, { expiresIn: process.env.REFRESH_EXPIRES_IN || '7d' });
+}
+function verifyAccess(token){
+    const jwtSecret = process.env.JWT_SECRET || 'cos-creusot-secret-key-default-2024';
+    try {
+        return jwt.verify(token, jwtSecret);
+    } catch (error) {
+        console.log('❌ Erreur verifyAccess:', error.name, error.message);
+        if (error.name === 'JsonWebTokenError' && error.message === 'jwt malformed') {
+            console.log('🔍 Token malformé détecté:', token.substring(0, 50) + '...');
+        }
+        throw error;
+    }
+}
+function verifyRefresh(token){
+    const refreshSecret = process.env.REFRESH_SECRET || (process.env.JWT_SECRET || 'cos-creusot-secret-key-default-2024') + '_refresh';
+    return jwt.verify(token, refreshSecret);
+}
+
 // Route de connexion
 router.post('/login', loginValidation, async (req, res) => {
     try {
@@ -118,13 +145,8 @@ router.post('/login', loginValidation, async (req, res) => {
             });
         }
 
-        // Créer le token JWT
-        const jwtSecret = process.env.JWT_SECRET || 'cos-creusot-secret-key-default-2024';
-        const token = jwt.sign(
-            { userId: user.id, email: user.email, role: user.role },
-            jwtSecret,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
-        );
+        const accessToken = signAccess({ userId: user.id, email: user.email, role: user.role });
+        const refreshToken = signRefresh({ userId: user.id, tokenId: crypto.randomUUID() });
 
         // Mettre à jour la dernière connexion
         await User.updateLastLogin(user.id);
@@ -132,9 +154,18 @@ router.post('/login', loginValidation, async (req, res) => {
         // Logger la connexion réussie
         await logLogin(true);
 
+        // Refresh token en HttpOnly cookie
+        res.cookie('refresh_token', refreshToken, {
+            httpOnly: true,
+            secure: !!process.env.COOKIE_SECURE, // activer en prod HTTPS
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
         res.json({
             message: 'Connexion réussie',
-            token,
+            accessToken,
+            expiresIn: process.env.JWT_EXPIRES_IN || '30m',
             user: {
                 id: user.id,
                 email: user.email,
@@ -150,7 +181,7 @@ router.post('/login', loginValidation, async (req, res) => {
     }
 });
 
-// Route de vérification du token
+// Route de vérification du token (renvoie éventuellement un nouveau si proche expiration)
 router.get('/verify', async (req, res) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -163,8 +194,20 @@ router.get('/verify', async (req, res) => {
     }
 
     try {
-        const jwtSecret = process.env.JWT_SECRET || 'cos-creusot-secret-key-default-2024';
-        const decoded = jwt.verify(token, jwtSecret);
+        console.log('🔍 Token reçu (début):', token.substring(0, 20) + '...');
+        console.log('🔍 Token longueur:', token.length);
+        console.log('🔍 Token parties:', token.split('.').length);
+        
+        const decoded = verifyAccess(token);
+        // Sliding: si <10 min restantes => renvoyer nouveau token
+        let renewed = null;
+        if (decoded.exp) {
+            const now = Math.floor(Date.now()/1000);
+            const remaining = decoded.exp - now;
+            if (remaining < 600) { // 10 minutes
+                renewed = signAccess({ userId: decoded.userId, email: decoded.email, role: decoded.role });
+            }
+        }
         console.log('🔓 Token décodé:', decoded);
         
         const user = await User.findById(decoded.userId);
@@ -184,12 +227,34 @@ router.get('/verify', async (req, res) => {
                 firstname: user.firstname,
                 lastname: user.lastname,
                 role: user.role
-            }
+            },
+            renewedAccessToken: renewed || undefined
         });
 
     } catch (error) {
         console.log('💥 Erreur vérification token:', error.message);
         res.status(401).json({ error: 'Token invalide' });
+    }
+});
+
+// Route de refresh explicite
+router.post('/refresh', async (req, res) => {
+    try {
+        const cookieToken = req.cookies?.refresh_token;
+        const provided = req.body?.refresh_token;
+        const token = cookieToken || provided;
+        if (!token) return res.status(401).json({ error: 'Refresh token manquant' });
+        let decoded;
+        try {
+            decoded = verifyRefresh(token);
+        } catch (e) {
+            return res.status(401).json({ error: 'Refresh token invalide' });
+        }
+        // TODO: on pourrait stocker/valider tokenId côté DB pour permettre revoke.
+        const newAccess = signAccess({ userId: decoded.userId, email: decoded.email, role: decoded.role });
+        res.json({ accessToken: newAccess, expiresIn: process.env.JWT_EXPIRES_IN || '30m' });
+    } catch (error) {
+        res.status(500).json({ error: 'Erreur serveur refresh' });
     }
 });
 
